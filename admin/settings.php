@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/init.php';
 require_admin(['admin']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fields = ['shop_name' => 100, 'shop_phone' => 30, 'shop_email' => 150, 'shop_address' => 255, 'shop_about' => 1000, 'gcash_name' => 100, 'gcash_number' => 30];
+    $fields = ['shop_name' => 100, 'shop_phone' => 30, 'shop_mobile' => 30, 'shop_email' => 150, 'shop_facebook' => 255, 'shop_address' => 255, 'shop_about' => 1000, 'gcash_name' => 100, 'gcash_number' => 30];
     $up = $pdo->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
     foreach ($fields as $key => $max) { $up->execute([$key, substr(trim($_POST[$key] ?? ''), 0, $max)]); }
 
@@ -36,8 +36,12 @@ $S = settings();
   <h3>Shop information</h3>
   <div class="form-group"><label for="sn">Shop name</label><input type="text" id="sn" name="shop_name" value="<?= e($S['shop_name'] ?? '') ?>" required></div>
   <div class="form-row">
-    <div class="form-group"><label for="sp">Phone</label><input type="text" id="sp" name="shop_phone" value="<?= e($S['shop_phone'] ?? '') ?>"></div>
+    <div class="form-group"><label for="sp">Phone (landline)</label><input type="text" id="sp" name="shop_phone" value="<?= e($S['shop_phone'] ?? '') ?>"></div>
+    <div class="form-group"><label for="sm">Mobile</label><input type="text" id="sm" name="shop_mobile" value="<?= e($S['shop_mobile'] ?? '') ?>"></div>
+  </div>
+  <div class="form-row">
     <div class="form-group"><label for="se">Email</label><input type="text" id="se" name="shop_email" value="<?= e($S['shop_email'] ?? '') ?>"></div>
+    <div class="form-group"><label for="sf">Facebook page link</label><input type="url" id="sf" name="shop_facebook" value="<?= e($S['shop_facebook'] ?? '') ?>" placeholder="https://www.facebook.com/..."></div>
   </div>
   <div class="form-group"><label for="sa">Address</label><input type="text" id="sa" name="shop_address" value="<?= e($S['shop_address'] ?? '') ?>"></div>
   <div class="form-group"><label for="ab">About the shop (Home page)</label><textarea id="ab" name="shop_about"><?= e($S['shop_about'] ?? '') ?></textarea></div>

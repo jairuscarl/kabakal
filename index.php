@@ -3,6 +3,7 @@
 require_once __DIR__ . '/includes/init.php';
 require_once __DIR__ . '/includes/product_card.php';
 $page_title = 'Home';
+$main_class = '';   // home page uses a full-bleed hero + its own .container sections (no page padding)
 
 // Visible promo videos (newest first)
 $videos = $pdo->query("SELECT * FROM promo_video WHERE is_visible = 1 ORDER BY video_id DESC")->fetchAll();
@@ -23,7 +24,6 @@ if (!$featured) {
 }
 require __DIR__ . '/includes/header.php';
 ?>
-</main>
 <section class="hero">
   <?php if ($hero_video): ?>
     <!-- muted + autoplay + loop; poster and preload="metadata" keep the page light -->
@@ -86,5 +86,4 @@ require __DIR__ . '/includes/header.php';
     <p class="muted">Visit us: <?= e(setting('shop_address')) ?> &nbsp;|&nbsp; <?= e(setting('shop_phone')) ?></p>
   </section>
 </div>
-<main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

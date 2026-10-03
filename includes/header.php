@@ -33,5 +33,6 @@ $current = basename($_SERVER['SCRIPT_NAME']);
     </nav>
   </div>
 </header>
-<main class="container page">
+<?php $main_class = $main_class ?? 'container page'; /* the Home page passes '' for a full-bleed hero */ ?>
+<main<?= $main_class === '' ? '' : ' class="' . e($main_class) . '"' ?>>
 <?php show_flash(); ?>
