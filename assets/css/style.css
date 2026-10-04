@@ -161,22 +161,17 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 .site-footer h3 { color: var(--orange); } .site-footer p { color: var(--muted); margin: 0 0 10px; }
 .copy { text-align: center; padding: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
 
-/* ---- Social rail (Home page) ---- */
-/* Vertical Facebook / Google Maps / Instagram strip pinned to the left edge of the viewport.
-   It only appears when there is a real gutter beside the container (>=1300px), so it never sits
-   on top of page text; below that width the social links stay in the footer. */
-.social-rail {
-  position: fixed; left: 0; top: 50%; transform: translateY(-50%);
-  z-index: 40;                        /* under the sticky header (z-index: 50), above page content */
-  display: flex; flex-direction: column; gap: 4px; padding: 6px 6px 6px 4px;
-  background: var(--panel); border: 1px solid var(--line); border-left: 0;
-  border-radius: 0 10px 10px 0; box-shadow: 0 8px 20px rgba(0, 0, 0, .5);
+/* ---- Hero call-to-action: Shop equipment button + Facebook / Instagram / Maps icons beside it ---- */
+.hero-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.hero-social { display: flex; align-items: center; gap: 10px; }
+/* 46px round tiles so they line up with the height of the .btn next to them */
+.hero-social a {
+  display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  border: 2px solid var(--line); background: rgba(11, 11, 11, .45); color: var(--white);
 }
-.social-rail a { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--white); }
-.social-rail a:hover, .social-rail a:focus-visible { background: var(--orange); color: #000; text-decoration: none; }
-.social-rail svg { display: block; }
-@media (max-width: 1299px) { .social-rail { display: none; } }
-@media print { .social-rail { display: none; } }
+.hero-social a:hover, .hero-social a:focus-visible { background: var(--orange); border-color: var(--orange); color: #000; text-decoration: none; }
+.hero-social svg { display: block; }
+@media print { .hero-social { display: none; } }
 
 /* ---- Admin ---- */
 .admin-bar { background: var(--black); border-bottom: 3px solid var(--orange); }
@@ -197,7 +192,11 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
   .nav-toggle { display: block; }
   .nav-links, .admin-nav { display: none; flex-direction: column; align-items: flex-start; width: 100%; padding: 8px 0 16px; gap: 12px; }
   .nav-links.open, .admin-nav.open { display: flex; }
-  .nav { flex-wrap: wrap; } .hero { min-height: 380px; }
+  .nav { flex-wrap: wrap; } .hero { min-height: 380px; aspect-ratio: auto; }
+  /* aspect-ratio would derive a 675px-wide hero from min-height on phones, forcing a sideways scroll. */
+  /* Hero copy: drop the desktop indent/shift so the headline stays inside the screen on phones.
+     margin-left goes back to auto so .container keeps centring the box with its side gutter. */
+  .hero-content { margin-left: auto; top: -30px; }
   /* Customer header on small screens: logo left, hamburger then cart icon on the right,
      and the menu drops onto its own full-width row once it is opened. */
   .site-header .nav { grid-template-columns: 1fr auto auto; }

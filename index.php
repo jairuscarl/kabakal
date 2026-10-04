@@ -24,36 +24,6 @@ if (!$featured) {
 }
 require __DIR__ . '/includes/header.php';
 ?>
-<?php /* Social rail: shows only when the window is wide enough for the gutter (>=1300px),
-         and each icon appears only when its link is set in Admin > Settings. */ ?>
-<?php if (setting('shop_facebook') || setting('shop_map') || setting('shop_instagram')): ?>
-<aside class="social-rail" aria-label="Follow us">
-  <?php if (setting('shop_facebook')): ?>
-    <a href="<?= e(setting('shop_facebook')) ?>" target="_blank" rel="noopener noreferrer" title="Facebook" aria-label="Facebook">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-      </svg>
-    </a>
-  <?php endif; ?>
-  <?php if (setting('shop_map')): ?>
-    <a href="<?= e(setting('shop_map')) ?>" target="_blank" rel="noopener noreferrer" title="Find us on Google Maps" aria-label="Find us on Google Maps">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-    </a>
-  <?php endif; ?>
-  <?php if (setting('shop_instagram')): ?>
-    <a href="<?= e(setting('shop_instagram')) ?>" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-      </svg>
-    </a>
-  <?php endif; ?>
-</aside>
-<?php endif; ?>
 <section class="hero">
   <?php if ($hero_video): ?>
     <!-- muted + autoplay + loop; poster and preload="metadata" keep the page light -->
@@ -65,7 +35,39 @@ require __DIR__ . '/includes/header.php';
   <div class="container hero-content">
     <h1>Build your <span>strength</span>.<br>Build your gym.</h1>
     <p>Boxing gear, gym equipment and machines for gym owners, athletes and home workouts.</p>
-    <a class="btn" href="<?= url('products.php') ?>">Shop equipment</a>
+    <?php /* Call-to-action row: the Shop equipment button with the social icons (Facebook / Instagram /
+             Google Maps) right beside it. Each icon prints only when its link is filled in Admin > Settings. */ ?>
+    <div class="hero-cta">
+      <a class="btn" href="<?= url('products.php') ?>">Shop equipment</a>
+      <?php if (setting('shop_facebook') || setting('shop_instagram') || setting('shop_map')): ?>
+      <div class="hero-social">
+        <?php if (setting('shop_facebook')): ?>
+          <a href="<?= e(setting('shop_facebook')) ?>" target="_blank" rel="noopener noreferrer" title="Facebook" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+            </svg>
+          </a>
+        <?php endif; ?>
+        <?php if (setting('shop_instagram')): ?>
+          <a href="<?= e(setting('shop_instagram')) ?>" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+            </svg>
+          </a>
+        <?php endif; ?>
+        <?php if (setting('shop_map')): ?>
+          <a href="<?= e(setting('shop_map')) ?>" target="_blank" rel="noopener noreferrer" title="Find us on Google Maps" aria-label="Find us on Google Maps">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </a>
+        <?php endif; ?>
+      </div>
+      <?php endif; ?>
+    </div>
   </div>
 </section>
 
