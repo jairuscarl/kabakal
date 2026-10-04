@@ -106,6 +106,9 @@ require __DIR__ . '/includes/header.php';
             </video>
           <?php endif; ?>
           <h3><?= e($v['title']) ?></h3>
+          <?php if ($v['source_type'] === 'facebook'): ?>
+            <p class="video-fallback muted">Player not loading? <a href="<?= e($v['embed_url']) ?>" target="_blank" rel="noopener">Watch this video on Facebook &rarr;</a></p>
+          <?php endif; ?>
         </div>
       <?php endforeach; ?>
     </div>

@@ -141,7 +141,50 @@ function product_image($path) { return url($path ?: 'assets/images/placeholder.s
 
 /** Only accept Facebook video links. */
 function is_facebook_url($u) { return (bool)preg_match('#^https://((www|m|web)\.)?facebook\.com/|^https://fb\.watch/#i', $u); }
-function facebook_embed_src($u) { return 'https://www.facebook.com/plugins/video.php?show_text=false&href=' . urlencode($u); }
+
+/**
+ * "Share > Copy link" short links (facebook.com/share/..., fb.watch/...) are only redirects.
+ * The embed player cannot read them, so they must be resolved to the real video URL first.
+ */
+function is_facebook_share_url($u) { return (bool)preg_match('#^https://((www|m|web)\.)?facebook\.com/(share|r)/|^https://fb\.watch/#i', $u); }
+
+/** Follow a Facebook short link to the real video URL (returns the input unchanged if it is already a full link). */
+function facebook_canonical_url($u) {
+    $u = trim((string)$u);
+    if (!is_facebook_share_url($u) || !function_exists('curl_init')) return $u;
+    $ch = curl_init($u);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS      => 5,
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0',
+    ]);
+    curl_exec($ch);
+    $final = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+    curl_close($ch);
+    return facebook_clean_url($final ?: $u);
+}
+
+/** Drop the tracking parameters (rdid, share_url, ...) Facebook adds when you copy a link. */
+function facebook_clean_url($u) {
+    $bits = parse_url((string)$u);
+    if (!$bits || empty($bits['host'])) return (string)$u;
+    $drop = ['rdid', 'share_url', 'mibextid', 'sfnsn', 'extid', 'refsrc', '_rdr', 'locale'];
+    parse_str($bits['query'] ?? '', $q);
+    foreach ($drop as $k) unset($q[$k]);
+    $clean = 'https://' . $bits['host'] . ($bits['path'] ?? '');
+    return $q ? $clean . '?' . http_build_query($q) : $clean;
+}
+
+/** Links the Facebook player can really embed: /videos/<id>, /reel/<id>, /watch/?v=<id>. */
+function is_embeddable_facebook_url($u) { return (bool)preg_match('#/(videos|reel|watch)/|/(video|permalink)\.php#i', (string)$u); }
+
+/** URL for Facebook's video player iframe. */
+function facebook_embed_src($u) {
+    return 'https://www.facebook.com/plugins/video.php?show_text=false&href='
+         . urlencode(facebook_clean_url(facebook_canonical_url($u)));
+}
 
 // ---------- Shopping cart ----------
 // Guests: cart lives in the session. Logged-in customers: cart lives in the database

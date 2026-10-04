@@ -13,7 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $title = trim($_POST['title'] ?? ''); $type = $_POST['source_type'] ?? 'file'; $fb = trim($_POST['embed_url'] ?? '');
         $err = null; $file = null; $poster = null;
         if ($title === '' || strlen($title) > 150) $err = 'Please enter a title (max 150 characters).';
-        elseif ($type === 'facebook') { if (!is_facebook_url($fb)) $err = 'Please paste a valid Facebook video link (https://www.facebook.com/... or https://fb.watch/...).'; }
+        elseif ($type === 'facebook') {
+            if (!is_facebook_url($fb)) $err = 'Please paste a valid Facebook video link (https://www.facebook.com/... or https://fb.watch/...).';
+            else {
+                $fb = facebook_canonical_url($fb);   // turn a "Share > Copy link" short link into the real video URL
+                if (!is_embeddable_facebook_url($fb)) $err = 'That is not a video page. Open the video on Facebook, then copy the address-bar link (facebook.com/yourpage/videos/123456 or facebook.com/reel/123456).';
+            }
+        }
         else { [$file, $err] = upload_video('video'); if (!$err && !$file) $err = 'Please choose an MP4 video file.'; }
         if (!$err) { [$poster, $err] = upload_image('poster', 'uploads/posters'); }
 
@@ -50,7 +56,8 @@ require __DIR__ . '/_header.php';
     <select id="st" name="source_type" onchange="document.getElementById('f-file').hidden = this.value !== 'file'; document.getElementById('f-fb').hidden = this.value !== 'facebook';">
       <option value="file">Upload MP4 file</option><option value="facebook">Facebook video link</option></select></div>
   <div class="form-group" id="f-file"><label for="v">MP4 file (max <?= MAX_VIDEO_SIZE / 1048576 ?> MB)</label><input type="file" id="v" name="video" accept="video/mp4"></div>
-  <div class="form-group" id="f-fb" hidden><label for="fb">Facebook video / reel link</label><input type="url" id="fb" name="embed_url" placeholder="https://www.facebook.com/..."></div>
+  <div class="form-group" id="f-fb" hidden><label for="fb">Facebook video / reel link</label><input type="url" id="fb" name="embed_url" placeholder="https://www.facebook.com/yourpage/videos/123456789">
+    <p class="help">Open the video on Facebook and copy the link in the <strong>address bar</strong>. Do not use "Share &gt; Copy link" (facebook.com/share/...) &mdash; those short links cannot be embedded.</p></div>
   <div class="form-group"><label for="p">Poster image (optional)</label><input type="file" id="p" name="poster" accept="image/*">
     <p class="help">Shown while the video loads. Makes the page faster on slow connections.</p></div>
   <button class="btn" type="submit">Add video</button>
