@@ -21,9 +21,9 @@ require __DIR__ . '/_header.php';
 <h1>Change password</h1>
 <form method="post" class="form-box form-wide">
   <?= csrf_field() ?>
-  <div class="form-group"><label for="o">Current password</label><input type="password" id="o" name="old_password" required></div>
-  <div class="form-group"><label for="n">New password (8+ characters)</label><input type="password" id="n" name="new_password" minlength="8" required></div>
-  <div class="form-group"><label for="n2">Confirm new password</label><input type="password" id="n2" name="new_password2" minlength="8" required></div>
+  <?= pw_field('o', 'old_password', 'Current password', 'required') ?>
+  <?= pw_field('n', 'new_password', 'New password (8+ characters)', 'minlength="8" required') ?>
+  <?= pw_field('n2', 'new_password2', 'Confirm new password', 'minlength="8" required') ?>
   <button class="btn" type="submit">Change password</button>
 </form>
 <?php require __DIR__ . '/_footer.php'; ?>

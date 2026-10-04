@@ -27,3 +27,19 @@ document.querySelectorAll('input[data-preview]').forEach(function (input) {
 document.querySelectorAll('video[autoplay]').forEach(function (v) {
   v.play && v.play().catch(function () {});
 });
+
+// Password fields: the eye button (built by pw_field() in includes/init.php)
+// switches the input between hidden and visible so you can check what you typed.
+document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var input = btn.parentNode.querySelector('input');
+    if (!input) return;
+    var show = input.type === 'password';          // clicking again hides it
+    input.type = show ? 'text' : 'password';
+    btn.classList.toggle('is-visible', show);      // swaps eye <-> eye-with-slash
+    btn.setAttribute('aria-pressed', show);
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    btn.setAttribute('title', show ? 'Hide password' : 'Show password');
+    input.focus();                                 // keep the caret in the field
+  });
+});

@@ -43,8 +43,8 @@ require __DIR__ . '/includes/header.php';
     <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" value="<?= e($f['email']) ?>" required></div>
     <div class="form-group"><label for="phone">Mobile number</label><input type="tel" id="phone" name="phone" value="<?= e($f['phone']) ?>"></div>
     <div class="form-group"><label for="address">Delivery address</label><input type="text" id="address" name="address" value="<?= e($f['address']) ?>"></div>
-    <div class="form-group"><label for="password">Password</label><input type="password" id="password" name="password" minlength="8" required></div>
-    <div class="form-group"><label for="password2">Confirm password</label><input type="password" id="password2" name="password2" minlength="8" required></div>
+    <?= pw_field('password', 'password', 'Password', 'minlength="8" required') ?>
+    <?= pw_field('password2', 'password2', 'Confirm password', 'minlength="8" required') ?>
     <button class="btn btn-block" type="submit">Register</button>
   </form>
   <p class="muted">Already have an account? <a href="<?= url('login.php') ?>">Log in</a></p>

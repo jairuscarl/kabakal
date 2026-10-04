@@ -28,7 +28,7 @@ require __DIR__ . '/includes/header.php';
   <form method="post">
     <?= csrf_field() ?><input type="hidden" name="next" value="<?= e($next) ?>">
     <div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" required autofocus></div>
-    <div class="form-group"><label for="password">Password</label><input type="password" id="password" name="password" required></div>
+    <?= pw_field('password', 'password', 'Password', 'required') ?>
     <button class="btn btn-block" type="submit">Log in</button>
   </form>
   <p class="muted">No account yet? <a href="<?= url('register.php') ?>">Register here</a></p>

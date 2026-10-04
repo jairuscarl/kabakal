@@ -31,9 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <form method="post">
     <?= csrf_field() ?>
     <div class="form-group"><label for="u">Username</label><input type="text" id="u" name="username" required autofocus></div>
-    <div class="form-group"><label for="p">Password</label><input type="password" id="p" name="password" required></div>
+    <?= pw_field('p', 'password', 'Password', 'required') ?>
     <button class="btn btn-block" type="submit">Log in</button>
   </form>
   <p class="muted"><a href="<?= url('index.php') ?>">&larr; Back to shop</a></p>
 </div></div>
+<script src="<?= url('assets/js/main.js') ?>"></script>
 </body></html>

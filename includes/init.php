@@ -360,3 +360,30 @@ function badge($text) {
     $class = strtolower(preg_replace('/[^a-z]+/i', '-', $text));
     return '<span class="badge badge-' . e($class) . '">' . e(ucfirst($text)) . '</span>';
 }
+
+// ---------- Password field with a show/hide (eye) button ----------
+
+/**
+ * Password input + label + an eye button so you can see what you typed.
+ * The button itself is wired up by assets/js/main.js (toggle in .pw-toggle).
+ *
+ *   <?= pw_field('password', 'password', 'Password', 'minlength="8" required') ?>
+ *
+ * $id    = input id (and what the label points at)  $name = form field name
+ * $label = text shown above the input              $extra = extra input attributes
+ */
+function pw_field($id, $name, $label, $extra = '') {
+    $eye = '<svg class="icon-eye" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" '
+         . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+         . '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    $eye_off = '<svg class="icon-eye-off" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" '
+         . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+         . '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94'
+         . 'M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>'
+         . '<line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    return '<div class="form-group"><label for="' . e($id) . '">' . e($label) . '</label>'
+         . '<div class="pw-field"><input type="password" id="' . e($id) . '" name="' . e($name) . '"'
+         . ($extra !== '' ? ' ' . $extra : '') . '>'
+         . '<button type="button" class="pw-toggle" aria-label="Show password" aria-pressed="false" '
+         . 'title="Show password">' . $eye . $eye_off . '</button></div></div>';
+}

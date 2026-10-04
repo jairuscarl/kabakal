@@ -112,6 +112,17 @@ img, video { max-width: 100%; display: block; }
 .card-body h3 { margin: 0; color: var(--white); } .card-cat { color: var(--muted); font-size: .85rem; }
 .price { font: 700 1.4rem "Oswald", Impact, sans-serif; color: var(--orange); }
 .card-body .btn { margin-top: auto; text-align: center; }
+.card-body { position: relative; }
+
+/* price is the first of the bottom group, so it takes all the free space above it */
+.card-body .price { margin-top: auto; }
+
+/* badge and button simply follow the price */
+.card-body .badge { align-self: flex-start; }
+.card-body .btn   { margin-top: 8px; }  /* replaces the old margin-top:auto */
+
+
+
 
 /* ---- Product detail ---- */
 .detail { display: grid; gap: 32px; grid-template-columns: 1fr 1fr; align-items: start; }
@@ -131,6 +142,20 @@ input[type=number] { max-width: 110px; } textarea { min-height: 100px; resize: v
 .check { display: flex; gap: 8px; align-items: center; font-weight: 400; } .check input { width: auto; }
 .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; } .filter-bar input, .filter-bar select { width: auto; min-width: 180px; }
 .help { color: var(--muted); font-size: .88rem; margin-top: 4px; }
+/* Password field with a show/hide (eye) button. Markup comes from pw_field() in includes/init.php,
+   the click is handled in assets/js/main.js. The input gets right padding so text never runs
+   underneath the button, which sits centred on the right edge of the field. */
+.pw-field { position: relative; display: block; }
+.pw-field input[type=password], .pw-field input[type=text] { padding-right: 46px; }
+.pw-toggle { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); display: grid; place-items: center;
+  width: 34px; height: 34px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.pw-toggle:hover, .pw-toggle:focus-visible { color: var(--orange); background: rgba(255, 255, 255, .08); outline: none; }
+.pw-toggle svg { display: block; }
+.pw-toggle .icon-eye-off { display: none; }
+.pw-toggle.is-visible .icon-eye { display: none; }
+.pw-toggle.is-visible .icon-eye-off { display: block; }
+/* Hide Edge/IE's own reveal button so there is only one eye icon */
+.pw-field input::-ms-reveal, .pw-field input::-ms-clear { display: none; }
 
 /* ---- Tables ---- */
 .table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 24px; }
@@ -215,7 +240,7 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 /* ---- Logo ---- */
 .brand-logo { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
 .brand-logo img { height: 52px; width: auto; }
-.admin-tag { font-family: "Oswald", Impact, sans-serif; font-weight: 700; letter-spacing: 1px; color: #000; background: var(--orange); border-radius: 4px; padding: 1px 8px; font-size: .85rem; }
+.admin-tag { font-family: "Oswald", Impact, sans-serif; font-weight: 700; letter-spacing: 1px; color: #000000; background: var(--red-dark); border-radius: 4px; padding: 1px 8px; font-size: .85rem; }
 .login-logo { text-align: center; margin-bottom: 14px; } .login-logo img { width: min(260px, 80%); height: auto; margin-inline: auto; }
 .footer-logo { width: 190px; height: auto; margin-bottom: 12px; }
 @media (max-width: 600px) { .brand-logo img { height: 42px; } }

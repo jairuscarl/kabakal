@@ -72,9 +72,9 @@ require __DIR__ . '/includes/header.php';
   <form method="post" class="form-box" style="max-width:none">
     <h3>Change password</h3>
     <?= csrf_field() ?><input type="hidden" name="action" value="password">
-    <div class="form-group"><label for="op">Current password</label><input type="password" id="op" name="old_password" required></div>
-    <div class="form-group"><label for="np">New password</label><input type="password" id="np" name="new_password" minlength="8" required></div>
-    <div class="form-group"><label for="np2">Confirm new password</label><input type="password" id="np2" name="new_password2" minlength="8" required></div>
+    <?= pw_field('op', 'old_password', 'Current password', 'required') ?>
+    <?= pw_field('np', 'new_password', 'New password', 'minlength="8" required') ?>
+    <?= pw_field('np2', 'new_password2', 'Confirm new password', 'minlength="8" required') ?>
     <button class="btn" type="submit">Change password</button>
   </form>
 </div>
