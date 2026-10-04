@@ -4,6 +4,7 @@
   --orange: #ffa600; --orange-dark: #d95a00;
   --white: #fff;     --muted: #a8a8a8;
   --green: #2ecc71;  --red: #ff4d4d;   --yellow: #f5c518; --blue: #4da3ff;
+  --red-dark: #d93636;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -34,16 +35,33 @@ img, video { max-width: 100%; display: block; }
 .nav { display: flex; align-items: center; justify-content: space-between; min-height: 64px; gap: 16px; }
 .brand { font-size: 1.6rem; font-weight: 700; color: var(--white); margin: 0; } .brand span { color: var(--orange); } .brand:hover { text-decoration: none; }
 .nav-links { display: flex; align-items: center; gap: 22px; }
-.nav-links a { color: var(--white); font-weight: 600; } .nav-links a:hover, .nav-links a.active { color: var(--orange); text-decoration: none; }
+.nav-links a { color: var(--white); font-weight: 600; padding: 8px 14px; } .nav-links a:hover, .nav-links a.active { color: var(--orange); text-decoration: none; }
+.nav-links a:hover{
+  background: var(--orange);
+  color: #000;
+  border-radius: 50px;
+}
 .nav-links a.btn { color: #000; }
 .nav-toggle { display: none; background: none; border: 2px solid var(--orange); color: var(--orange); font-size: 1.4rem; border-radius: 6px; padding: 2px 10px; cursor: pointer; }
 .cart-badge { background: var(--orange); color: #000; border-radius: 999px; padding: 0 8px; font-size: .8rem; font-weight: 700; }
+
+/* Customer header layout: logo on the left, the links centred in the bar, cart icon alone on the right.
+   The shared .nav rule above stays flex, so the ADMIN bar keeps its wrapping menu. */
+.site-header .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; min-height: 64px; }
+.site-header .nav > .brand { grid-area: 1 / 1; justify-self: start; }
+.site-header .nav-links { grid-area: 1 / 2; justify-content: center; gap: 70px; }
+.site-header .nav-cart { grid-area: 1 / 3; justify-self: end; }
+.nav-cart { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 6px; border-radius: 8px; color: var(--white); }
+.nav-cart:hover, .nav-cart.active { color: var(--orange); text-decoration: none; }
+.nav-cart svg { display: block; }
+.nav-cart .cart-badge { position: absolute; top: -3px; right: -4px; min-width: 18px; text-align: center; line-height: 1.4; }
 
 /* ---- Buttons ---- */
 .btn { display: inline-block; background: var(--orange); color: #000; border: 2px solid var(--orange); padding: 11px 22px; border-radius: 6px; font: 700 1rem "Oswald", Impact, sans-serif; text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none; }
 .btn:hover { background: var(--orange-dark); border-color: var(--orange-dark); text-decoration: none; }
 .btn-outline { background: transparent; color: var(--orange); } .btn-outline:hover { background: var(--orange); color: #000; }
 .btn-danger { background: transparent; border-color: var(--red); color: var(--red); } .btn-danger:hover { background: var(--red); border-color: var(--red); color: #000; }
+.btn-danger-solid { background: var(--red); border-color: var(--red); color: #000; } .btn-danger-solid:hover { background: var(--red-dark); border-color: var(--red-dark); color: #000; }
 .btn-sm { padding: 6px 14px; font-size: .9rem; } .btn-block { display: block; width: 100%; text-align: center; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
@@ -57,19 +75,23 @@ img, video { max-width: 100%; display: block; }
 .badge-shipped, .badge-sold { background: var(--blue); color: #000; }
 
 /* ---- Hero ---- */
-/* Gym photo backdrop (assets/images/kabakal_bg.jpg) with a dark overlay so the headline stays readable. */
+/* Gym photo backdrop (assets/images/kabakal_bg.jpg, 1672x941). The hero box is given the photo's
+   own aspect ratio, so the whole image fits and nothing is cropped top/bottom at any window width.
+   min-height keeps room for the headline on small screens (there the sides crop instead). */
 .hero {
-  position: relative; min-height: 460px; display: flex; align-items: center; overflow: hidden;
+  position: relative; display: flex; align-items: center; overflow: hidden;
+  aspect-ratio: 1672 / 941;
+  min-height: 460px;
   background-color: var(--black);
   background-image:
     linear-gradient(90deg, rgba(11,11,11,.93) 6%, rgba(11,11,11,.62) 52%, rgba(11,11,11,.30) 100%),
-    url("../images/kabakal_bg.jpg");
+    url("../images/boxingkabakal.jpg");
   background-position: center, center;
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
 }
 .hero video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
-.hero-content { position: relative; z-index: 2; padding: 48px 0; max-width: 640px; }
+.hero-content { position: relative; z-index: 2; padding: 48px 0; max-width: 640px; margin-left: 250px; top: -90px;}
 .hero-content p { font-size: 1.15rem; color: #eee; margin-bottom: 24px; }
 .hero h1 span { color: var(--orange); }
 
@@ -139,11 +161,30 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 .site-footer h3 { color: var(--orange); } .site-footer p { color: var(--muted); margin: 0 0 10px; }
 .copy { text-align: center; padding: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
 
+/* ---- Social rail (Home page) ---- */
+/* Vertical Facebook / Google Maps / Instagram strip pinned to the left edge of the viewport.
+   It only appears when there is a real gutter beside the container (>=1300px), so it never sits
+   on top of page text; below that width the social links stay in the footer. */
+.social-rail {
+  position: fixed; left: 0; top: 50%; transform: translateY(-50%);
+  z-index: 40;                        /* under the sticky header (z-index: 50), above page content */
+  display: flex; flex-direction: column; gap: 4px; padding: 6px 6px 6px 4px;
+  background: var(--panel); border: 1px solid var(--line); border-left: 0;
+  border-radius: 0 10px 10px 0; box-shadow: 0 8px 20px rgba(0, 0, 0, .5);
+}
+.social-rail a { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--white); }
+.social-rail a:hover, .social-rail a:focus-visible { background: var(--orange); color: #000; text-decoration: none; }
+.social-rail svg { display: block; }
+@media (max-width: 1299px) { .social-rail { display: none; } }
+@media print { .social-rail { display: none; } }
+
 /* ---- Admin ---- */
 .admin-bar { background: var(--black); border-bottom: 3px solid var(--orange); }
 .admin-bar .nav { flex-wrap: wrap; padding: 8px 0; }
 .admin-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
 .admin-nav a { color: var(--white); font-weight: 600; padding: 4px 0; } .admin-nav a.active, .admin-nav a:hover { color: var(--orange); text-decoration: none; }
+/* The admin Logout reuses the .btn chip, which needs its padding/ink re-asserted over the rules above. */
+.admin-nav a.btn { color: #000; padding: 6px 14px; } .admin-nav a.btn:hover { color: #000; }
 .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin-bottom: 28px; }
 .stat { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--orange); border-radius: 8px; padding: 18px; }
 .stat b { display: block; font: 700 2rem "Oswald", Impact, sans-serif; color: var(--orange); } .stat span { color: var(--muted); }
@@ -157,6 +198,11 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
   .nav-links, .admin-nav { display: none; flex-direction: column; align-items: flex-start; width: 100%; padding: 8px 0 16px; gap: 12px; }
   .nav-links.open, .admin-nav.open { display: flex; }
   .nav { flex-wrap: wrap; } .hero { min-height: 380px; }
+  /* Customer header on small screens: logo left, hamburger then cart icon on the right,
+     and the menu drops onto its own full-width row once it is opened. */
+  .site-header .nav { grid-template-columns: 1fr auto auto; }
+  .site-header .nav-toggle { grid-area: 1 / 2; }
+  .site-header .nav-links { grid-row: 2; grid-column: 1 / -1; gap: 12px; }
 }
 @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .card-body { padding: 10px; } .price { font-size: 1.15rem; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

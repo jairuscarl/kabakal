@@ -29,7 +29,7 @@ if ($_SESSION['admin_role'] === 'admin') $menu['settings.php'] = 'Settings';
           <?php if ($file === 'payments.php' && $pending_proofs): ?><span class="cart-badge"><?= $pending_proofs ?></span><?php endif; ?></a>
       <?php endforeach; ?>
       <a href="<?= url('index.php') ?>" target="_blank">View site</a>
-      <a href="<?= url('admin/logout.php') ?>">Logout (<?= e($_SESSION['admin_name']) ?>)</a>
+      <a href="<?= url('admin/logout.php') ?>" class="btn btn-sm btn-danger-solid">Logout (<?= e($_SESSION['admin_name']) ?>)</a>
     </nav>
   </div>
 </header>

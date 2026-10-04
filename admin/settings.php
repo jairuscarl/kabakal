@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/init.php';
 require_admin(['admin']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fields = ['shop_name' => 100, 'shop_phone' => 30, 'shop_mobile' => 30, 'shop_email' => 150, 'shop_facebook' => 255, 'shop_address' => 255, 'shop_about' => 1000, 'gcash_name' => 100, 'gcash_number' => 30];
+    $fields = ['shop_name' => 100, 'shop_phone' => 30, 'shop_mobile' => 30, 'shop_email' => 150, 'shop_facebook' => 255, 'shop_instagram' => 255, 'shop_map' => 255, 'shop_address' => 255, 'shop_about' => 1000, 'gcash_name' => 100, 'gcash_number' => 30];
     $up = $pdo->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
     foreach ($fields as $key => $max) { $up->execute([$key, substr(trim($_POST[$key] ?? ''), 0, $max)]); }
 
@@ -42,6 +42,10 @@ $S = settings();
   <div class="form-row">
     <div class="form-group"><label for="se">Email</label><input type="text" id="se" name="shop_email" value="<?= e($S['shop_email'] ?? '') ?>"></div>
     <div class="form-group"><label for="sf">Facebook page link</label><input type="url" id="sf" name="shop_facebook" value="<?= e($S['shop_facebook'] ?? '') ?>" placeholder="https://www.facebook.com/..."></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label for="si">Instagram page link</label><input type="url" id="si" name="shop_instagram" value="<?= e($S['shop_instagram'] ?? '') ?>" placeholder="https://www.instagram.com/..."></div>
+    <div class="form-group"><label for="sg">Google Maps link</label><input type="url" id="sg" name="shop_map" value="<?= e($S['shop_map'] ?? '') ?>" placeholder="https://maps.app.goo.gl/..."></div>
   </div>
   <div class="form-group"><label for="sa">Address</label><input type="text" id="sa" name="shop_address" value="<?= e($S['shop_address'] ?? '') ?>"></div>
   <div class="form-group"><label for="ab">About the shop (Home page)</label><textarea id="ab" name="shop_about"><?= e($S['shop_about'] ?? '') ?></textarea></div>

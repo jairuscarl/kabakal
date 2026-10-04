@@ -333,6 +333,8 @@ INSERT INTO settings (setting_key, setting_value) VALUES
   ('shop_mobile',  '+63 930 018 5018'),
   ('shop_email',   'kabakalequipmenthub@gmail.com'),
   ('shop_facebook','https://www.facebook.com/rogandomarkhel'),
+  ('shop_instagram',''),
+  ('shop_map',     ''),
   ('shop_address', 'Enter shop address in Admin > Settings'),
   ('shop_about',   'Kabakal Fitness Equipment sells gym and boxing equipment for gym owners, fitness enthusiasts and anyone building a home gym.'),
   ('gcash_name',   'KABAKAL FITNESS'),
