@@ -112,7 +112,15 @@ function upload_image($field, $folder) {
     if (!isset($allowed[$mime]) || !@getimagesize($f['tmp_name'])) return [null, 'Only JPG, PNG, WEBP or GIF images are allowed.'];
 
     $name = bin2hex(random_bytes(12)) . '.' . $allowed[$mime];   // random safe file name
-    if (!move_uploaded_file($f['tmp_name'], ROOT_PATH . "/$folder/$name")) return [null, 'Could not save the image. Check folder permissions.'];
+    // Make sure the destination folder exists (it may be missing on a fresh checkout/XAMPP copy).
+    $folder = trim($folder, '/');
+    if ($folder === '' || str_contains($folder, '..')) return [null, 'Invalid upload folder.'];
+    $dir = ROOT_PATH . "/$folder";
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        return [null, 'Could not save the image. Upload folder is missing and could not be created.'];
+    }
+    if (!is_writable($dir)) return [null, 'Could not save the image. Check folder permissions.'];
+    if (!move_uploaded_file($f['tmp_name'], "$dir/$name")) return [null, 'Could not save the image. Check folder permissions.'];
     return ["$folder/$name", null];
 }
 
@@ -125,7 +133,12 @@ function upload_video($field) {
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
     if ($mime !== 'video/mp4') return [null, 'Only MP4 videos are allowed.'];
     $name = bin2hex(random_bytes(12)) . '.mp4';
-    if (!move_uploaded_file($f['tmp_name'], ROOT_PATH . "/assets/videos/$name")) return [null, 'Could not save the video. Check folder permissions.'];
+    $dir = ROOT_PATH . '/assets/videos';
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        return [null, 'Could not save the video. Upload folder is missing and could not be created.'];
+    }
+    if (!is_writable($dir)) return [null, 'Could not save the video. Check folder permissions.'];
+    if (!move_uploaded_file($f['tmp_name'], "$dir/$name")) return [null, 'Could not save the video. Check folder permissions.'];
     return ["assets/videos/$name", null];
 }
 
