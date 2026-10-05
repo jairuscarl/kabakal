@@ -144,7 +144,7 @@ function upload_video($field) {
 
 /** Delete a file we previously saved (only inside uploads/ or assets/videos/). */
 function delete_file($relPath) {
-    if ($relPath && preg_match('#^(uploads/(products|proofs|posters|settings)|assets/videos)/[A-Za-z0-9._-]+$#', $relPath)) {
+    if ($relPath && preg_match('#^(uploads/(products|proofs|posters|settings|reviews)|assets/videos)/[A-Za-z0-9._-]+$#', $relPath)) {
         @unlink(ROOT_PATH . '/' . $relPath);
     }
 }
@@ -372,6 +372,16 @@ function refresh_order_after_payment($order_id, $admin_id = null) {
 function badge($text) {
     $class = strtolower(preg_replace('/[^a-z]+/i', '-', $text));
     return '<span class="badge badge-' . e($class) . '">' . e(ucfirst($text)) . '</span>';
+}
+
+/** Five star glyphs for a rating (first $n filled). Used by reviews.php and Admin > Reviews. */
+function stars_display($rating) {
+    $n = (int)$rating;
+    $out = '<span class="stars" role="img" aria-label="' . $n . ' out of 5 stars">';
+    for ($i = 1; $i <= 5; $i++) {
+        $out .= '<span class="star' . ($i <= $n ? ' on' : '') . '" aria-hidden="true">&#9733;</span>';
+    }
+    return $out . '</span>';
 }
 
 // ---------- Password field with a show/hide (eye) button ----------

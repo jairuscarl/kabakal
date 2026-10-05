@@ -43,3 +43,42 @@ document.querySelectorAll('.pw-toggle').forEach(function (btn) {
     input.focus();                                 // keep the caret in the field
   });
 });
+
+// Fullscreen lightbox for review photos: click a .js-lightbox thumbnail to see
+// the full image, click again (or the X, or press Esc) to close. With JS off
+// the link simply opens the image file.
+(function () {
+  var box = null;
+  function close() {
+    if (!box) return;
+    box.parentNode.removeChild(box);
+    box = null;
+    document.body.classList.remove('lightbox-open');
+  }
+  document.querySelectorAll('a.js-lightbox').forEach(function (link) {
+    link.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      close();
+      box = document.createElement('div');
+      box.className = 'lightbox';
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-label', 'Full-size photo');
+      var img = document.createElement('img');
+      img.src = link.getAttribute('href');
+      var thumb = link.querySelector('img');
+      img.alt = thumb ? thumb.alt : 'Full-size review photo';
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'lightbox-close';
+      x.setAttribute('aria-label', 'Close');
+      x.innerHTML = '&times;';
+      box.appendChild(x);
+      box.appendChild(img);
+      box.addEventListener('click', close);         // X, backdrop or photo all close it
+      document.body.appendChild(box);
+      document.body.classList.add('lightbox-open');
+      x.focus();
+    });
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') close(); });
+})();

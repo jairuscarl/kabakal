@@ -5,7 +5,8 @@ $pending_proofs = (int)$pdo->query("SELECT COUNT(*) FROM payment WHERE payment_s
 $menu = [
     'index.php' => 'Dashboard', 'products.php' => 'Products', 'categories.php' => 'Categories',
     'inventory.php' => 'Inventory', 'orders.php' => 'Orders', 'customers.php' => 'Customers',
-    'payments.php' => 'Payments', 'videos.php' => 'Promo Videos', 'account.php' => 'My Password',
+    'payments.php' => 'Payments', 'reviews.php' => 'Reviews', 'videos.php' => 'Promo Videos',
+    'account.php' => 'My Password',
 ];
 if ($_SESSION['admin_role'] === 'admin') $menu['settings.php'] = 'Settings';
 ?><!DOCTYPE html>

@@ -22,6 +22,7 @@ $current = basename($_SERVER['SCRIPT_NAME']);
     <nav class="nav-links" id="nav-links">
       <a href="<?= url('index.php') ?>" class="<?= $current === 'index.php' ? 'active' : '' ?>">Home</a>
       <a href="<?= url('products.php') ?>" class="<?= in_array($current, ['products.php', 'product.php']) ? 'active' : '' ?>">Products</a>
+      <a href="<?= url('reviews.php') ?>" class="<?= $current === 'reviews.php' ? 'active' : '' ?>">Reviews</a>
       <?php if (is_logged_in()): ?>
         <a href="<?= url('my_account.php') ?>" class="<?= $current === 'my_account.php' ? 'active' : '' ?>">My Account</a>
         <a href="<?= url('logout.php') ?>" class="btn btn-sm btn-danger-solid">Logout</a>

@@ -44,7 +44,7 @@ includes/             init.php (helpers), header/footer
 assets/css, js        style.css, main.js;  assets/videos = promo MP4 files
 uploads/              product photos, GCash proofs, posters, QR code
 admin/                admin pages
-index.php, products.php, product.php, cart.php, checkout.php,
+index.php, products.php, product.php, reviews.php, cart.php, checkout.php,
 order_confirm.php, my_account.php, login.php, register.php, logout.php
 ```
 

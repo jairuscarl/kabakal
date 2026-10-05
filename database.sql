@@ -344,3 +344,47 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 -- Featured products on the Home page (admin can change in Products)
 UPDATE equipment SET is_featured = 1
 WHERE name IN ('Monster Smith Machine w/ Pec Deck (New)', 'Spin Bike Yellow/Black', '1 Station Home Gym w/ Leg Press', 'Premium Punching Bag Set', 'Olympic Bar 7ft', 'Hex Dumbbell 50 lbs');
+
+-- ===================== ADDED: CUSTOMER REVIEWS / FEEDBACK =====================
+
+-- Public Reviews page: logged-in customers rate 1-5 stars, write text, attach a photo.
+CREATE TABLE review (
+  review_id   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  customer_id INT UNSIGNED NOT NULL,
+  rating      TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment     TEXT NOT NULL,
+  image_url   VARCHAR(255) NULL,   -- e.g. uploads/reviews/ab12....jpg
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (review_id),
+  KEY idx_review_customer (customer_id),
+  CONSTRAINT fk_review_customer FOREIGN KEY (customer_id)
+    REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Heart button on each review: one like per customer per review, counted for display.
+CREATE TABLE review_like (
+  review_id   INT UNSIGNED NOT NULL,
+  customer_id INT UNSIGNED NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (review_id, customer_id),
+  KEY idx_review_like_customer (customer_id),
+  CONSTRAINT fk_review_like_review FOREIGN KEY (review_id)
+    REFERENCES review (review_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_review_like_customer FOREIGN KEY (customer_id)
+    REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Replies to a review. ONLY admin/staff accounts may post these (enforced in reviews.php).
+CREATE TABLE review_reply (
+  reply_id   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  review_id  INT UNSIGNED NOT NULL,
+  admin_id   INT UNSIGNED NOT NULL,
+  comment    TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (reply_id),
+  KEY idx_review_reply_review (review_id),
+  CONSTRAINT fk_review_reply_review FOREIGN KEY (review_id)
+    REFERENCES review (review_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_review_reply_admin FOREIGN KEY (admin_id)
+    REFERENCES admin (admin_id) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;

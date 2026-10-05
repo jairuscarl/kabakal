@@ -222,6 +222,14 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
   .nav-links, .admin-nav { display: none; flex-direction: column; align-items: flex-start; width: 100%; padding: 8px 0 16px; gap: 12px; }
   .nav-links.open, .admin-nav.open { display: flex; }
   .nav { flex-wrap: wrap; } .hero { min-height: 380px; aspect-ratio: auto; }
+  /* Mobile backdrop: pin the crop to the RIGHT half of the gym photo (100% = right
+     edge), so the boxer on the right stays in frame on narrow portrait screens
+     instead of the empty dark gym on the left. Desktop keeps the centred crop.
+     NOTE: in .hero the FIRST layer is the gradient overlay and the SECOND is the
+     photo, so the photo's position is the 2nd value: gradient center, photo right. */
+  body { background-position: right top, right top; background-attachment: scroll, scroll; }
+  .hero { background-position: center center, right center; }
+  .hero video { object-position: right center; }
   /* aspect-ratio would derive a 675px-wide hero from min-height on phones, forcing a sideways scroll. */
   /* Hero copy: drop the desktop indent/shift so the headline stays inside the screen on phones.
      margin-left goes back to auto so .container keeps centring the box with its side gutter. */
@@ -244,3 +252,75 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 .login-logo { text-align: center; margin-bottom: 14px; } .login-logo img { width: min(260px, 80%); height: auto; margin-inline: auto; }
 .footer-logo { width: 190px; height: auto; margin-bottom: 12px; }
 @media (max-width: 600px) { .brand-logo img { height: 42px; } }
+
+/* ---- Reviews & Feedback (reviews.php) ---- */
+/* Summary strip: big average number + stars + review count */
+.review-summary { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--orange);
+  border-radius: 8px; padding: 14px 20px; margin-bottom: 24px; }
+.review-avg-num { font: 700 2rem "Oswald", Impact, sans-serif; color: var(--yellow); }
+/* The write-a-review box spans the full width like the list under it */
+.review-form { max-width: none; margin: 0 0 26px; }
+
+/* Star glyphs: filled stars are yellow, empty ones dark grey */
+.stars { display: inline-flex; gap: 2px; letter-spacing: 1px; }
+.stars .star { color: #4a4a4a; line-height: 1; }
+.stars .star.on { color: var(--yellow); }
+
+/* Star rating picker: pure CSS, so it also works with JS off. The radios are in
+   5..1 order, which makes "input:checked ~ label" fill exactly N stars; the
+   flex row-reverse then shows them back in 1..5 order left to right. */
+.star-input { position: relative; display: flex; flex-direction: row-reverse;
+  justify-content: flex-end; gap: 4px; font-size: 2rem; line-height: 1; }
+.star-input input { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.star-input label { color: #4a4a4a; cursor: pointer; transition: color .12s ease; }
+.star-input input:checked ~ label,
+.star-input label:hover, .star-input label:hover ~ label { color: var(--yellow); }
+.star-input input:focus-visible + label { outline: 3px solid var(--orange); outline-offset: 2px; border-radius: 3px; }
+
+/* One review card */
+.review-list { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+/* min-width:0 stops the grid track from being stretched wide by long content */
+.review { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px 20px; }
+.review:hover { border-color: var(--orange); }
+.review-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.review-author { font-weight: 700; display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.review-date { color: var(--muted); font-size: .85rem; }
+.review-text { margin: 10px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Review photos show at one fixed thumbnail size; click opens the fullscreen
+   lightbox (assets/js/main.js). With JS off the link opens the image itself. */
+.review-img-link { display: block; margin-top: 12px; }
+.review-img { display: block; width: 240px; height: 180px; max-width: 100%; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--line); background: #111; cursor: zoom-in; }
+.review-foot { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+
+/* Heart (like) button with its count */
+.like-btn { display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: #101010; border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px; color: var(--muted); font: inherit; }
+.like-btn:hover { color: var(--red); border-color: var(--red); }
+.like-btn.liked { color: var(--red); border-color: var(--red); background: rgba(255, 77, 77, .12); }
+.like-btn.liked svg { fill: currentColor; }
+.like-btn svg { display: block; }
+.like-btn .like-count { font-weight: 700; }
+
+/* Admin replies: orange rule down the left side so they read as answers */
+.review-replies { display: grid; gap: 10px; margin-top: 14px; padding-left: 14px; border-left: 3px solid var(--orange); }
+.reply { background: var(--panel-2); border-radius: 6px; padding: 10px 12px; }
+.reply .review-text { margin-top: 6px; }
+.reply-meta { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
+.badge-admin { background: var(--orange); color: #000; }
+/* Admin-only reply box sits at the bottom of each review */
+.review-reply-form { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* Fullscreen lightbox: click a review photo (or an admin table thumb) to see it
+   full size. Click anywhere, the X, or press Esc to close. */
+.lightbox { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center;
+  justify-content: center; padding: 24px; background: rgba(0, 0, 0, .9); cursor: zoom-out; }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 6px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, .6); }
+.lightbox-close { position: absolute; top: 12px; right: 18px; background: none; border: 0;
+  color: #fff; font: 700 2.2rem/1 "Oswald", Impact, sans-serif; cursor: pointer; padding: 6px; }
+.lightbox-close:hover, .lightbox-close:focus-visible { color: var(--orange); }
+body.lightbox-open { overflow: hidden; }
+
