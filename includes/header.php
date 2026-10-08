@@ -2,6 +2,7 @@
 /** Customer-side header + navigation. Set $page_title before including. */
 $shop_name = setting('shop_name', 'Kabakal Fitness Equipment');
 $cart_total = cart_count();
+$me_name = is_logged_in() ? (trim((string)($_SESSION['customer_name'] ?? '')) ?: 'Customer') : '';
 $current = basename($_SERVER['SCRIPT_NAME']);
 ?><!DOCTYPE html>
 <html lang="en">
@@ -31,7 +32,8 @@ $current = basename($_SERVER['SCRIPT_NAME']);
         <a href="<?= url('register.php') ?>" class="btn btn-sm">Register</a>
       <?php endif; ?>
     </nav>
-    <?php /* The cart sits alone on the right edge of the bar and shows just an icon; the badge is the item count. */ ?>
+    <?php /* Top-right of the bar: the cart icon first, then the "Welcome, <name>!" greeting (only after login) hard against the right edge; the badge is the item count. */ ?>
+    <div class="nav-right">
     <a class="nav-cart<?= $current === 'cart.php' ? ' active' : '' ?>" href="<?= url('cart.php') ?>" title="Cart" aria-label="Cart<?php if ($cart_total): ?> (<?= (int)$cart_total ?>)<?php endif; ?>">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <circle cx="8" cy="21" r="1" />
@@ -40,6 +42,8 @@ $current = basename($_SERVER['SCRIPT_NAME']);
       </svg>
       <?php if ($cart_total): ?><span class="cart-badge"><?= (int)$cart_total ?></span><?php endif; ?>
     </a>
+      <?php if ($me_name !== ''): ?><span class="nav-welcome">Welcome, <b><?= e($me_name) ?></b>!</span><?php endif; ?>
+    </div>
   </div>
 </header>
 <?php $main_class = $main_class ?? 'container page'; /* the Home page passes '' for a full-bleed hero */ ?>

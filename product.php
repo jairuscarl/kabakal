@@ -1,6 +1,7 @@
 <?php
 /** Product details page. */
 require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/includes/reviews.php';
 
 $st = $pdo->prepare("SELECT e.*, c.name AS category_name FROM equipment e
                      JOIN category c ON c.category_id = e.category_id
@@ -8,6 +9,12 @@ $st = $pdo->prepare("SELECT e.*, c.name AS category_name FROM equipment e
 $st->execute([(int)($_GET['id'] ?? 0)]);
 $p = $st->fetch();
 if (!$p) { flash('error', 'That product could not be found.'); redirect('products.php'); }
+
+// Reviews: handle POST (post a review / like) first, then load this product's reviews.
+review_handle_post('product.php?id=' . (int)$p['equipment_id'], (int)$p['equipment_id']);
+$reviews = review_fetch((int)$p['equipment_id']);
+$replies = review_replies($reviews);
+[$total, $avg] = review_stats($reviews);
 
 $page_title = $p['name'];
 require __DIR__ . '/includes/header.php';
@@ -38,4 +45,36 @@ require __DIR__ . '/includes/header.php';
     <?php endif; ?>
   </div>
 </div>
+<h2>Customer reviews</h2>
+<div class="review-summary">
+  <?php if ($reviews): ?>
+    <span class="review-avg-num"><?= number_format($avg, 1) ?></span>
+    <?= stars_display((int)round($avg)) ?>
+    <span class="muted">from <?= (int)$total ?> review<?= $total === 1 ? '' : 's' ?></span>
+  <?php else: ?>
+    <span class="muted">No reviews yet — be the first to review this product.</span>
+  <?php endif; ?>
+</div>
+
+<?php if (is_logged_in()): ?>
+  <h3>Write a review</h3>
+  <?= review_form('product.php?id=' . (int)$p['equipment_id'], (int)$p['equipment_id']) ?>
+<?php else: ?>
+  <div class="form-box review-form">
+    <h3>Write a review</h3>
+    <p class="muted">Log in to rate this product 1 to 5 stars, write a comment and add a photo of your gear.</p>
+    <a class="btn" href="<?= url('login.php?next=' . urlencode('product.php?id=' . (int)$p['equipment_id'])) ?>">Log in to review</a>
+  </div>
+<?php endif; ?>
+
+<?php if (!$reviews): ?>
+  <p class="empty">No reviews yet. Be the first to tell us how this equipment is holding up!</p>
+<?php else: ?>
+  <div class="review-list">
+    <?php foreach ($reviews as $r): ?>
+      <?= review_card($r, $replies, false) ?>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
+
 <?php require __DIR__ . '/includes/footer.php'; ?>

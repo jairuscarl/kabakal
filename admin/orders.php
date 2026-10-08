@@ -35,7 +35,14 @@ require __DIR__ . '/_header.php';
     <td><?= peso($o['total_amount']) ?></td><td><?= peso($o['paid_amount']) ?></td>
     <td><?= $o['status'] === 'cancelled' ? '-' : peso($o['balance']) ?></td>
     <td><?= badge($o['status']) ?></td><td><?= badge($o['pay_state']) ?></td>
-    <td><a class="btn btn-sm btn-outline" href="<?= url('admin/order_view.php?id=' . (int)$o['order_id']) ?>">Details</a></td>
+    <td class="actions">
+      <a class="btn btn-sm btn-outline" href="<?= url('admin/order_view.php?id=' . (int)$o['order_id']) ?>">Details</a>
+      <form method="post" class="inline-form" data-confirm="Delete this order and its items?">
+        <?= csrf_field() ?><input type="hidden" name="action" value="delete_order">
+        <input type="hidden" name="order_id" value="<?= (int)$o['order_id'] ?>">
+        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+      </form>
+    </td>
   </tr>
   <?php endforeach; ?>
   <?php if (!$orders): ?><tr><td colspan="9" class="empty">No orders found.</td></tr><?php endif; ?>

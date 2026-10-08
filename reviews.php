@@ -8,6 +8,7 @@
  *   is rendered just for admins and the POST action checks the session again.
  */
 require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/includes/reviews.php';
 
 // stars_display() lives in includes/init.php so Admin > Reviews can reuse it.
 
@@ -19,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_login();
         $rating = (int)($_POST['rating'] ?? 0);
         $text   = trim($_POST['comment'] ?? '');
+        $equipment_id = (int)($_POST['equipment_id'] ?? 0) ?: null;
         if ($rating < 1 || $rating > 5)  flash('error', 'Please choose a star rating of 1 to 5.');
         elseif (mb_strlen($text) < 3)    flash('error', 'Please write a few words about your experience.');
         elseif (mb_strlen($text) > 2000) flash('error', 'Your review is too long (2000 characters maximum).');
@@ -26,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$img, $err] = upload_image('image', 'uploads/reviews');
             if ($err) flash('error', $err);
             else {
-                $pdo->prepare('INSERT INTO review (customer_id, rating, comment, image_url) VALUES (?, ?, ?, ?)')
-                    ->execute([(int)$_SESSION['customer_id'], $rating, $text, $img]);
+                $pdo->prepare('INSERT INTO review (customer_id, equipment_id, rating, comment, image_url) VALUES (?, ?, ?, ?, ?)')
+                    ->execute([(int)$_SESSION['customer_id'], $equipment_id, $rating, $text, $img]);
                 flash('success', 'Thank you! Your review has been posted.');
             }
         }
@@ -71,30 +73,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ---- Reviews, newest first: total likes + "has the visitor liked it?" ----
-$cid = is_logged_in() ? (int)$_SESSION['customer_id'] : 0;
-$st = $pdo->prepare("SELECT r.*, c.full_name,
-        (SELECT COUNT(*) FROM review_like rl WHERE rl.review_id = r.review_id) AS like_count,
-        EXISTS(SELECT 1 FROM review_like rl2 WHERE rl2.review_id = r.review_id AND rl2.customer_id = ?) AS liked_by_me
-     FROM review r JOIN customer c ON c.customer_id = r.customer_id
-     ORDER BY r.review_id DESC");
-$st->execute([$cid]);
-$reviews = $st->fetchAll();
-
-// Admin replies for the reviews above, grouped by review (one query)
-$replies = [];
-if ($reviews) {
-    $ids   = array_column($reviews, 'review_id');
-    $marks = implode(',', array_fill(0, count($ids), '?'));
-    $st = $pdo->prepare("SELECT rr.*, a.full_name AS admin_name FROM review_reply rr
-                         JOIN admin a ON a.admin_id = rr.admin_id
-                         WHERE rr.review_id IN ($marks) ORDER BY rr.reply_id");
-    $st->execute($ids);
-    foreach ($st->fetchAll() as $rep) $replies[$rep['review_id']][] = $rep;
-}
-
-$total = count($reviews);
-$avg   = $total ? array_sum(array_column($reviews, 'rating')) / $total : 0;
+// ---- Reviews, newest first ----
+// Fetch with product name so every review can show which product it belongs to.
+$reviews = review_fetch(0);
+$replies = review_replies($reviews);
 
 $page_title = 'Reviews';
 require __DIR__ . '/includes/header.php';
@@ -102,7 +84,8 @@ require __DIR__ . '/includes/header.php';
 <h1>Reviews &amp; Feedback</h1>
 
 <div class="review-summary">
-  <?php if ($total): ?>
+  <?php if ($reviews): ?>
+    <?php [$total, $avg] = review_stats($reviews); ?>
     <span class="review-avg-num"><?= number_format($avg, 1) ?></span>
     <?= stars_display((int)round($avg)) ?>
     <span class="muted">from <?= (int)$total ?> review<?= $total === 1 ? '' : 's' ?></span>
@@ -119,6 +102,15 @@ require __DIR__ . '/includes/header.php';
 <form method="post" class="form-box review-form" enctype="multipart/form-data">
   <h3>Write a review</h3>
   <?= csrf_field() ?><input type="hidden" name="action" value="review">
+  <div class="form-group">
+    <label for="product">Product (optional)</label>
+    <select id="product" name="equipment_id">
+      <option value="0">Any product / All equipment</option>
+      <?php foreach (review_products() as $prod): ?>
+        <option value="<?= (int)$prod['equipment_id'] ?>"><?= e($prod['name']) ?></option>
+      <?php endforeach; ?>
+    </select>
+  </div>
   <div class="form-group">
     <label id="rating-label">Your rating</label>
     <?php /* Star picker works without JS: radios in 5..1 order so "input:checked ~ label"
@@ -163,6 +155,9 @@ require __DIR__ . '/includes/header.php';
       <span class="review-author"><?= e($r['full_name']) ?> <?= stars_display($r['rating']) ?></span>
       <span class="review-date"><?= e(date('M j, Y', strtotime($r['created_at']))) ?></span>
     </div>
+    <?php if (!empty($r['equipment_name'])): ?>
+      <div class="review-product"><a class="chip" href="<?= e(url('product.php?id=' . (int)$r['equipment_id'])) ?>"><?= e($r['equipment_name']) ?></a></div>
+    <?php endif; ?>
     <p class="review-text"><?= e($r['comment']) ?></p>
     <?php if ($r['image_url']): ?>
       <a class="review-img-link js-lightbox" href="<?= e(url($r['image_url'])) ?>">

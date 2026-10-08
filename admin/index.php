@@ -16,6 +16,20 @@ $sales_month = (float)$pdo->query("SELECT COALESCE(SUM(amount),0) FROM payment W
                                    AND YEAR(payment_date) = YEAR(CURDATE()) AND MONTH(payment_date) = MONTH(CURDATE())")->fetchColumn();
 $receivables = 0;                                   // money still owed by customers (not cancelled orders)
 foreach (fetch_orders("AND o.status <> 'cancelled'") as $o) { $receivables += $o['balance']; }
+
+// ---------- Delete an order (full admins only) ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (($_POST['action'] ?? '') === 'delete_order') {
+        require_admin(['admin']);
+        $id = (int)($_POST['order_id'] ?? 0);
+        if ($id > 0) {
+            $pdo->prepare('DELETE FROM orders WHERE order_id = ?')->execute([$id]);
+            $pdo->prepare('DELETE FROM order_item WHERE order_id = ?')->execute([$id]);
+            flash('success', 'Order deleted.');
+        }
+        redirect('admin/index.php');
+    }
+}
 $recent = array_slice(fetch_orders(), 0, 8);
 
 $page_title = 'Dashboard';
@@ -32,9 +46,18 @@ require __DIR__ . '/_header.php';
 <div class="table-wrap"><table>
   <tr><th>Order</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Payment</th><th></th></tr>
   <?php foreach ($recent as $o): ?>
-    <tr><td>#<?= (int)$o['order_id'] ?></td><td><?= e($o['customer_name']) ?></td><td><?= e($o['order_date']) ?></td>
-        <td><?= peso($o['total_amount']) ?></td><td><?= badge($o['status']) ?></td><td><?= badge($o['pay_state']) ?></td>
-        <td><a class="btn btn-sm btn-outline" href="<?= url('admin/order_view.php?id=' . (int)$o['order_id']) ?>">Open</a></td></tr>
+    <tr>
+      <td>#<?= (int)$o['order_id'] ?></td><td><?= e($o['customer_name']) ?></td><td><?= e($o['order_date']) ?></td>
+      <td><?= peso($o['total_amount']) ?></td><td><?= badge($o['status']) ?></td><td><?= badge($o['pay_state']) ?></td>
+      <td class="actions">
+        <a class="btn btn-sm btn-outline" href="<?= url('admin/order_view.php?id=' . (int)$o['order_id']) ?>">Open</a>
+        <form method="post" class="inline-form" data-confirm="Delete this order and its items?">
+          <?= csrf_field() ?><input type="hidden" name="action" value="delete_order">
+          <input type="hidden" name="order_id" value="<?= (int)$o['order_id'] ?>">
+          <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
   <?php endforeach; ?>
   <?php if (!$recent): ?><tr><td colspan="7" class="empty">No orders yet.</td></tr><?php endif; ?>
 </table></div>
