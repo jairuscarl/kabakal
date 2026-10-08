@@ -91,6 +91,7 @@ require __DIR__ . '/_header.php';
       <p><a href="<?= url('admin/customer_view.php?id=' . (int)$cust['customer_id']) ?>"><?= e($cust['full_name']) ?></a><br>
          <?= e($cust['email']) ?><br><?= e($cust['phone']) ?></p>
       <p class="muted">Ship to: <?= e($order['shipping_address']) ?></p>
+      <?php if ($order['status'] === 'cancelled' && ($order['cancel_reason'] || $order['cancelled_at'])): ?><p class="muted">Cancelled<?= $order['cancelled_at'] ? ' on ' . e(date('M j, Y', strtotime($order['cancelled_at']))) : '' ?><?= $order['cancel_reason'] ? ' - ' . e($order['cancel_reason']) : '' ?></p><?php endif; ?>
       <?php if ($order['shipping_date']): ?><p class="muted">Shipped: <?= e($order['shipping_date']) ?></p><?php endif; ?>
     </div>
     <form method="post" class="summary" style="margin-top:16px">

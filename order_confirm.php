@@ -23,8 +23,26 @@ foreach ($payments as $p) { if ($p['payment_status'] === 'pending') $pending_amt
 $to_send = max(0, round($order['total_amount'] - $order['paid_amount'] - $pending_amt, 2));
 $can_pay = $order['status'] !== 'cancelled' && $to_send > 0;
 
+// ---- Cancel order: only while still pending and no money has been sent or verified ----
+$has_payment = false;
+foreach ($payments as $p) { if (in_array($p['payment_status'], ['pending', 'paid'], true)) $has_payment = true; }
+$can_cancel = $order['status'] === 'pending' && !$has_payment;
+$cancel_reasons = ['Ordered by mistake', 'Found a better price', 'Changed my mind', 'Delivery takes too long', 'Other'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cancel') {
+    $reason = $_POST['cancel_reason'] ?? '';
+    if (!$can_cancel)                                      flash('error', 'This order can no longer be cancelled. Please contact the shop.');
+    elseif (!in_array($reason, $cancel_reasons, true))     flash('error', 'Please choose a reason for cancelling.');
+    elseif (set_order_status($order_id, 'cancelled')) {    // also returns the items to available stock
+        $pdo->prepare('UPDATE orders SET cancel_reason = ?, cancelled_at = NOW() WHERE order_id = ? AND customer_id = ?')
+            ->execute([$reason, $order_id, $_SESSION['customer_id']]);
+        flash('success', 'Your order has been cancelled.');
+    } else flash('error', 'Could not cancel this order.');
+    redirect("order_confirm.php?id=$order_id");
+}
+
 // ---- Customer uploads proof of payment ----
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can_pay) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $can_pay && ($_POST['action'] ?? '') !== 'cancel') {
     $amount = round((float)($_POST['amount'] ?? 0), 2);
     $ref    = trim($_POST['reference_number'] ?? '');
     $error  = null;
@@ -110,11 +128,25 @@ require __DIR__ . '/includes/header.php';
         <button class="btn btn-block" type="submit">Submit payment proof</button>
       </form>
     <?php elseif ($order['status'] === 'cancelled'): ?>
-      <div class="summary"><h3>Order cancelled</h3><p class="muted">This order was cancelled.</p></div>
+      <div class="summary"><h3>Order cancelled</h3><p class="muted">This order was cancelled<?= $order['cancelled_at'] ? ' on ' . e(date('M j, Y', strtotime($order['cancelled_at']))) : '' ?>.<?php if ($order['cancel_reason']): ?><br>Reason: <?= e($order['cancel_reason']) ?><?php endif; ?></p></div>
     <?php elseif ($order['pay_state'] === 'Paid'): ?>
       <div class="summary"><h3>Fully paid</h3><p class="muted">Thank you! Your payment is verified.</p></div>
     <?php else: ?>
       <div class="summary"><h3>Waiting for verification</h3><p class="muted">Your receipt is being checked by the shop.</p></div>
+    <?php endif; ?>
+
+    <?php if ($can_cancel): ?>
+      <form method="post" class="summary" style="margin-top:16px" onsubmit="return confirm('Cancel this order? This cannot be undone.');">
+        <h3>Cancel order</h3>
+        <?= csrf_field() ?><input type="hidden" name="action" value="cancel">
+        <div class="form-group"><label for="cr">Reason</label>
+          <select id="cr" name="cancel_reason" required>
+            <option value="">Choose a reason</option>
+            <?php foreach ($cancel_reasons as $r): ?><option value="<?= e($r) ?>"><?= e($r) ?></option><?php endforeach; ?>
+          </select></div>
+        <button class="btn btn-danger btn-block" type="submit">Cancel this order</button>
+        <p class="help">You can cancel only before sending a payment.</p>
+      </form>
     <?php endif; ?>
   </aside>
 </div>
