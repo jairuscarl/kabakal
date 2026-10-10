@@ -49,6 +49,8 @@ order_confirm.php, my_account.php, login.php, register.php, logout.php
 ```
 
 ## How stock and payments work
+- Admin > Inventory shows the **Date stock added** (last restock date) for every product; the date is stamped whenever you restock or raise a product's stock.
+- The Admin Dashboard groups items as **High / Moderate / Low Performing** based on units sold (cancelled orders are not counted; products with no sales are Low Performing). Each group lists all of its items inside a fixed-height scroll box.
 - Order placed: stock goes **Available -> Reserved**.
 - Order becomes Paid / Shipped / Delivered: **Reserved -> Sold**.
 - Order cancelled: items return to **Available**.

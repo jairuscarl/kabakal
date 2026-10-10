@@ -212,6 +212,27 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin-bottom: 28px; }
 .stat { background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--orange); border-radius: 8px; padding: 18px; }
 .stat b { display: block; font: 700 2rem "Oswald", Impact, sans-serif; color: var(--orange); } .stat span { color: var(--muted); }
+
+/* ---- Item performance (Admin dashboard): high / moderate / low performing items ---- */
+.perf-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 28px; }
+.perf-col { background: var(--panel); border: 1px solid var(--line); border-top: 5px solid var(--orange); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+.perf-col h3 { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 12px;
+  font: 700 1.1rem "Oswald", Impact, sans-serif; text-transform: uppercase; letter-spacing: .5px; }
+.perf-count { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; font-size: .85rem; color: var(--muted); }
+.perf-high { border-top-color: var(--green); } .perf-moderate { border-top-color: var(--yellow); } .perf-low { border-top-color: var(--red); }
+.perf-list { list-style: none; margin: 0; padding: 0 10px 0 0; display: grid; gap: 8px;
+  /* every panel shows all of its items inside a fixed-height scroll box */
+  max-height: 320px; overflow-y: auto; overscroll-behavior: contain; }
+/* visible, theme-coloured scrollbar (orange thumb on a dark track) */
+.perf-list { scrollbar-width: thin; scrollbar-color: var(--orange) var(--panel-2); }
+.perf-list::-webkit-scrollbar { width: 12px; }
+.perf-list::-webkit-scrollbar-track { background: var(--panel-2); border-radius: 999px; }
+.perf-list::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 999px; border: 3px solid var(--panel-2); }
+.perf-list::-webkit-scrollbar-thumb:hover { background: var(--orange-dark); }
+.perf-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-bottom: 7px; border-bottom: 1px dashed var(--line); }
+.perf-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.perf-name { overflow-wrap: anywhere; }
+.perf-meta { color: var(--muted); font-size: .85rem; white-space: nowrap; }
 .page-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; } .page-head h1, .page-head h2 { margin: 0; }
 .admin-login { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
 
@@ -224,7 +245,7 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
   .nav { flex-wrap: wrap; } .hero { min-height: 380px; aspect-ratio: auto; }
   /* Mobile backdrop: pin the crop to the RIGHT half of the gym photo (100% = right
      edge), so the boxer on the right stays in frame on narrow portrait screens
-     instead of the empty dark gym on the left. Desktop keeps the centred crop.
+     instead of the empty dark gym on the left. Desktop keeps the centred crop.x`
      NOTE: in .hero the FIRST layer is the gradient overlay and the SECOND is the
      photo, so the photo's position is the 2nd value: gradient center, photo right. */
   body { background-position: right top, right top; background-attachment: scroll, scroll; }

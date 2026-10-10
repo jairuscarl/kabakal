@@ -27,6 +27,19 @@ try {
     die(DEBUG ? 'Database error: ' . $e->getMessage() : 'Site is temporarily unavailable.');
 }
 
+// ---------- Schema self-check ----------
+// Databases imported from an older database.sql do not have the "date stock was added"
+// column yet. Create (and backfill) it here once so the stock pages always work.
+try {
+    $has_stock_date = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS
+                                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'equipment'
+                                     AND COLUMN_NAME = 'last_restocked_at'")->fetchColumn();
+    if (!$has_stock_date) {
+        $pdo->exec('ALTER TABLE equipment ADD COLUMN last_restocked_at DATETIME NULL AFTER created_at');
+        $pdo->exec('UPDATE equipment SET last_restocked_at = created_at WHERE stock_quantity > 0');
+    }
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
 // ---------- Small helpers ----------
 
 /** Escape text before printing it in HTML (prevents XSS). */
@@ -277,10 +290,19 @@ function cart_merge_guest() {
 //   available (= equipment.stock_quantity)  ->  reserved (order placed, not yet paid)
 //   reserved -> sold (order paid/shipped/delivered)   |   -> available again if cancelled
 
-function inv_change($eid, $status, $delta, $admin_id = null) {
+/**
+ * Change one inventory bucket by $delta.
+ * $mark_added = true records the change as stock being ADDED: it stamps
+ * equipment.last_restocked_at, the "Date stock added" shown in Admin > Inventory.
+ * The stamp only happens when the available quantity actually goes up.
+ */
+function inv_change($eid, $status, $delta, $admin_id = null, $mark_added = false) {
     global $pdo;
     if ($status === 'available') {
-        $pdo->prepare('UPDATE equipment SET stock_quantity = GREATEST(0, CAST(stock_quantity AS SIGNED) + ?) WHERE equipment_id = ?')->execute([$delta, $eid]);
+        $pdo->prepare('UPDATE equipment SET stock_quantity = GREATEST(0, CAST(stock_quantity AS SIGNED) + ?),
+                              last_restocked_at = IF(?, NOW(), last_restocked_at)
+                       WHERE equipment_id = ?')
+            ->execute([$delta, ($mark_added && $delta > 0) ? 1 : 0, $eid]);
         // keep the "available" row in the inventory table equal to the product's stock
         $pdo->prepare("INSERT INTO inventory (equipment_id, quantity, status, admin_id)
                        SELECT equipment_id, stock_quantity, 'available', ? FROM equipment WHERE equipment_id = ?

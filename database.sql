@@ -60,6 +60,7 @@ CREATE TABLE equipment (
   is_featured     TINYINT(1) NOT NULL DEFAULT 0,   -- ADDED: show on Home page
   status          ENUM('active','inactive','discontinued') NOT NULL DEFAULT 'active',
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_restocked_at DATETIME NULL,               -- ADDED: date stock was last added (restock)
   PRIMARY KEY (equipment_id),
   KEY idx_equipment_category (category_id),
   KEY idx_equipment_supplier (supplier_id),
@@ -298,6 +299,9 @@ INSERT INTO equipment (category_id, name, description, price, stock_quantity, st
 -- CHANGED: 'available' row per product. Out of Stock is shown whenever available = 0.
 INSERT INTO inventory (equipment_id, quantity, status)
 SELECT equipment_id, stock_quantity, 'available' FROM equipment;
+
+-- Date each starter product's stock was added (the app keeps this updated on every restock).
+UPDATE equipment SET last_restocked_at = created_at WHERE stock_quantity > 0;
 
 -- ===================== ADDED TABLES =====================
 

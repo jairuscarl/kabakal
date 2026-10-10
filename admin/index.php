@@ -32,6 +32,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 $recent = array_slice(fetch_orders(), 0, 8);
 
+// ---------- Item performance: units sold per product (cancelled orders excluded) ----------
+$perf_rows = $pdo->query("SELECT e.equipment_id, e.name,
+                                 COALESCE(SUM(CASE WHEN o.status <> 'cancelled' THEN oi.quantity END), 0) AS units_sold,
+                                 COALESCE(SUM(CASE WHEN o.status <> 'cancelled' THEN oi.subtotal END), 0) AS revenue
+                          FROM equipment e
+                          LEFT JOIN order_item oi ON oi.equipment_id = e.equipment_id
+                          LEFT JOIN orders o      ON o.order_id = oi.order_id
+                          WHERE e.status <> 'discontinued'
+                          GROUP BY e.equipment_id, e.name
+                          ORDER BY units_sold DESC, revenue DESC, e.name")->fetchAll();
+
+// Products that actually sold something are split into thirds (best first):
+// top third = High Performing, middle third = Moderate Performing, rest = Low Performing.
+// Products with no sales at all always count as Low Performing.
+$sellers = $no_sales = [];
+foreach ($perf_rows as $row) { if ($row['units_sold'] > 0) $sellers[] = $row; else $no_sales[] = $row; }
+$hi_end  = (int)ceil(count($sellers) / 3);
+$mid_end = (int)ceil(count($sellers) * 2 / 3);
+$perf = ['high' => [], 'moderate' => [], 'low' => []];
+foreach ($sellers as $i => $row) {
+    if ($i < $hi_end)      $perf['high'][]     = $row;
+    elseif ($i < $mid_end) $perf['moderate'][] = $row;
+    else                   $perf['low'][]      = $row;
+}
+$perf['low'] = array_merge($perf['low'], $no_sales);
+
 $page_title = 'Dashboard';
 require __DIR__ . '/_header.php';
 ?>
@@ -41,6 +67,24 @@ require __DIR__ . '/_header.php';
   <div class="stat"><b><?= peso($sales_total) ?></b><span>Total sales (verified)</span></div>
   <div class="stat"><b><?= peso($sales_month) ?></b><span>Sales this month</span></div>
   <div class="stat"><b><?= peso($receivables) ?></b><span>Unpaid balances</span></div>
+</div>
+<div class="page-head"><h2>Item performance</h2><span class="muted">Based on units sold &middot; cancelled orders not counted</span></div>
+<div class="perf-grid">
+  <?php foreach ([['high', 'High Performing Items'], ['moderate', 'Moderate Performing Items'], ['low', 'Low Performing Items']] as [$key, $label]): ?>
+    <div class="perf-col perf-<?= $key ?>">
+      <h3><?= e($label) ?><span class="perf-count"><?= count($perf[$key]) ?></span></h3>
+      <?php if (!$perf[$key]): ?>
+        <p class="muted">Nothing in this group yet.</p>
+      <?php else: ?>
+        <ul class="perf-list">
+          <?php foreach ($perf[$key] as $r): ?>
+            <li><span class="perf-name"><?= e($r['name']) ?></span>
+                <span class="perf-meta"><?= (int)$r['units_sold'] ?> sold &middot; <?= peso($r['revenue']) ?></span></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </div>
+  <?php endforeach; ?>
 </div>
 <div class="page-head"><h2>Recent orders</h2><a class="btn btn-sm btn-outline" href="<?= url('admin/orders.php') ?>">All orders</a></div>
 <div class="table-wrap"><table>

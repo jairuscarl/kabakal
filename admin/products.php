@@ -58,13 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('UPDATE equipment SET name=?, category_id=?, price=?, description=?, status=?, is_featured=?, image_url=? WHERE equipment_id=?')
                 ->execute([$d['name'], $d['category_id'], $d['price'], $d['description'] ?: null, $d['status'], $d['featured'], $img ?: $old['image_url'], $id]);
             if ($img) delete_file($old['image_url']);
-            inv_change($id, 'available', (int)$d['stock'] - (int)$old['stock_quantity'], $aid);   // keep inventory in sync
+            inv_change($id, 'available', (int)$d['stock'] - (int)$old['stock_quantity'], $aid, true);   // keep inventory in sync + stamp the date stock was added
             flash('success', 'Product updated.');
         } else {                                                     // ---- insert
             $pdo->prepare('INSERT INTO equipment (category_id, name, description, price, stock_quantity, image_url, is_featured, status)
                            VALUES (?, ?, ?, ?, 0, ?, ?, ?)')
                 ->execute([$d['category_id'], $d['name'], $d['description'] ?: null, $d['price'], $img, $d['featured'], $d['status']]);
-            inv_change((int)$pdo->lastInsertId(), 'available', (int)$d['stock'], $aid);
+            inv_change((int)$pdo->lastInsertId(), 'available', (int)$d['stock'], $aid, true);
             flash('success', 'Product added.');
         }
         redirect('admin/products.php');
@@ -94,7 +94,9 @@ if ($action === 'add' || $action === 'edit'):
         <?php foreach ($categories as $c): ?><option value="<?= (int)$c['category_id'] ?>" <?= $c['category_id'] == $p['category_id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option><?php endforeach; ?>
       </select></div>
     <div class="form-group"><label for="price">Price (₱)</label><input type="number" id="price" name="price" step="0.01" min="0" value="<?= e($p['price']) ?>" required style="max-width:none"></div>
-    <div class="form-group"><label for="stock">Stock available</label><input type="number" id="stock" name="stock_quantity" min="0" value="<?= (int)$p['stock_quantity'] ?>" required style="max-width:none"></div>
+    <div class="form-group"><label for="stock">Stock available</label><input type="number" id="stock" name="stock_quantity" min="0" value="<?= (int)$p['stock_quantity'] ?>" required style="max-width:none">
+      <?php if (!empty($p['last_restocked_at'])): ?><p class="help">Date stock added: <?= e(date('M j, Y', strtotime($p['last_restocked_at']))) ?></p><?php endif; ?>
+    </div>
     <div class="form-group"><label for="status">Status</label>
       <select id="status" name="status"><?php foreach (['active', 'inactive', 'discontinued'] as $s): ?><option <?= $p['status'] === $s ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?></select>
       <p class="help">Only "active" products show in the shop.</p></div>
