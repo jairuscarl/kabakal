@@ -330,6 +330,15 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 .reply { background: var(--panel-2); border-radius: 6px; padding: 10px 12px; }
 .reply .review-text { margin-top: 6px; }
 .reply-meta { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
+/* Delete (trash icon) on an admin's own comment: pushed right in the meta line,
+   or shown under the comment text when the form sits outside the meta. */
+.reply-meta .reply-del { margin-left: auto; }
+.reply > .reply-del { margin-top: 6px; }
+/* The delete control itself is a small trash-icon button (hover turns it red). */
+.reply-del-btn { display: inline-flex; align-items: center; justify-content: center; padding: 5px 7px;
+  background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  color: var(--red); cursor: pointer; line-height: 1; }
+.reply-del-btn:hover { background: var(--red); border-color: var(--red); color: #000; }
 .badge-admin { background: var(--orange); color: #000; }
 /* Admin-only reply box sits at the bottom of each review */
 .review-reply-form { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }

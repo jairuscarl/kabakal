@@ -406,6 +406,14 @@ function stars_display($rating) {
     return $out . '</span>';
 }
 
+/** Trash-can glyph for icon-only delete buttons (2px stroke, inherits currentColor). */
+function trash_icon($size = 16) {
+    return '<svg viewBox="0 0 24 24" width="' . (int)$size . '" height="' . (int)$size . '" fill="none" stroke="currentColor" '
+         . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+         . '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'
+         . '<path d="M10 11v6"/><path d="M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+}
+
 // ---------- Password field with a show/hide (eye) button ----------
 
 /**

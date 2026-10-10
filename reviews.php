@@ -71,6 +71,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         redirect('reviews.php');
     }
+
+    // ---- Delete an admin comment (reply): the admin who wrote it only ----
+    if ($action === 'delete_reply') {
+        if (!is_admin_logged_in()) {
+            flash('error', 'Only admin accounts can delete admin comments.');
+        } else {
+            $id = (int)($_POST['reply_id'] ?? 0);
+            $st = $pdo->prepare('SELECT admin_id FROM review_reply WHERE reply_id = ?'); $st->execute([$id]);
+            $owner = $st->fetchColumn();
+            if ($owner === false)                               flash('error', 'That comment no longer exists.');
+            elseif ((int)$owner !== (int)$_SESSION['admin_id']) flash('error', 'You can only delete your own comments.');
+            else {
+                $pdo->prepare('DELETE FROM review_reply WHERE reply_id = ?')->execute([$id]);
+                flash('success', 'Comment deleted.');
+            }
+        }
+        redirect('reviews.php');
+    }
 }
 
 // ---- Reviews, newest first ----
@@ -95,7 +113,7 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <?php if (is_admin_logged_in()): ?>
-  <p class="help">You are signed in as admin: use the reply box under any review to respond. Only admin accounts can post replies.</p>
+  <p class="help">You are signed in as admin: use the reply box under any review to respond. Only admin accounts can post replies &mdash; and each admin can remove their own comments by clicking the trash icon beside them.</p>
 <?php endif; ?>
 
 <?php if (is_logged_in()): ?>
@@ -185,7 +203,15 @@ require __DIR__ . '/includes/header.php';
       <?php foreach ($replies[$r['review_id']] as $rep): ?>
         <div class="reply">
           <div class="reply-meta"><span class="badge badge-admin">Admin</span>
-            <?= e($rep['admin_name']) ?> · <?= e(date('M j, Y', strtotime($rep['created_at']))) ?></div>
+            <?= e($rep['admin_name']) ?> · <?= e(date('M j, Y', strtotime($rep['created_at']))) ?>
+            <?php if (is_admin_logged_in() && (int)$rep['admin_id'] === (int)$_SESSION['admin_id']): ?>
+              <form method="post" class="inline-form reply-del" data-confirm="Delete this admin comment?">
+                <?= csrf_field() ?><input type="hidden" name="action" value="delete_reply">
+                <input type="hidden" name="reply_id" value="<?= (int)$rep['reply_id'] ?>">
+                <button class="reply-del-btn" type="submit" title="Delete this comment" aria-label="Delete this comment"><?= trash_icon() ?></button>
+              </form>
+            <?php endif; ?>
+          </div>
           <p class="review-text"><?= e($rep['comment']) ?></p>
         </div>
       <?php endforeach; ?>

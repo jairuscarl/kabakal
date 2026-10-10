@@ -53,6 +53,22 @@ if (!function_exists('review_handle_post')) {
             redirect($back);
         }
 
+        // ---- Delete an admin comment (reply): an admin can delete their OWN comment only ----
+        if (($_POST['action'] ?? '') === 'delete_reply') {
+            require_admin();
+            $id = (int)($_POST['reply_id'] ?? 0);
+            $st = $pdo->prepare('SELECT admin_id FROM review_reply WHERE reply_id = ?');
+            $st->execute([$id]);
+            $owner = $st->fetchColumn();
+            if ($owner === false)                               flash('error', 'That comment no longer exists.');
+            elseif ((int)$owner !== (int)$_SESSION['admin_id']) flash('error', 'You can only delete your own comments.');
+            else {
+                $pdo->prepare('DELETE FROM review_reply WHERE reply_id = ?')->execute([$id]);
+                flash('success', 'Comment deleted.');
+            }
+            redirect($back);
+        }
+
         // ---- Delete (full admin only) ----
         if (($_POST['action'] ?? '') === 'delete') {
             require_admin(['admin']);
@@ -219,7 +235,15 @@ if (!function_exists('review_card')) {
             $html .= '<div class="review-replies">';
             foreach ($replies[$r['review_id']] as $rep) {
                 $html .= '<div class="reply">';
-                $html .= '<div class="reply-meta"><span class="badge badge-admin">Admin</span> ' . e($rep['admin_name']) . ' &middot; ' . e(date('M j, Y', strtotime($rep['created_at']))) . '</div>';
+                $html .= '<div class="reply-meta"><span class="badge badge-admin">Admin</span> ' . e($rep['admin_name']) . ' &middot; ' . e(date('M j, Y', strtotime($rep['created_at'])));
+                if (is_admin_logged_in() && (int)$rep['admin_id'] === (int)$_SESSION['admin_id']) {
+                    // The admin who wrote this comment may delete it (trash-icon button).
+                    $html .= '<form method="post" class="inline-form reply-del" data-confirm="Delete this admin comment?">';
+                    $html .= csrf_field() . '<input type="hidden" name="action" value="delete_reply">';
+                    $html .= '<input type="hidden" name="reply_id" value="' . (int)$rep['reply_id'] . '">';
+                    $html .= '<button class="reply-del-btn" type="submit" title="Delete this comment" aria-label="Delete this comment">' . trash_icon() . '</button></form>';
+                }
+                $html .= '</div>';
                 $html .= '<p class="review-text">' . e($rep['comment']) . '</p></div>';
             }
             $html .= '</div>';
