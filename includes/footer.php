@@ -19,7 +19,7 @@
       <h3>Shop</h3>
       <p><a href="<?= url('products.php') ?>">All products</a><br>
          <a href="<?= url('cart.php') ?>">My cart</a><br>
-         <a href="<?= url('admin/login.php') ?>">Staff login</a></p>
+         <!--<a href="<?= url('admin/login.php') ?>">Staff login</a></p> -->
     </div>
   </div>
   <div class="copy">&copy; <?= date('Y') ?> <?= e(setting('shop_name')) ?>. All rights reserved.</div>

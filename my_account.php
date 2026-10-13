@@ -6,14 +6,19 @@ $cid = $_SESSION['customer_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['action'] ?? '') === 'profile') {
-        $name = trim($_POST['full_name'] ?? ''); $phone = trim($_POST['phone'] ?? ''); $addr = trim($_POST['address'] ?? '');
-        if (strlen($name) < 2 || strlen($name) > 100) {
-            flash('error', 'Please enter your full name.');
+        $first = trim($_POST['first_name'] ?? ''); $last = trim($_POST['last_name'] ?? '');
+        $phone = trim($_POST['phone'] ?? ''); $addr = trim($_POST['address'] ?? '');
+        // full_name stays a convenience "first last" copy of first_name + last_name.
+        $name = trim($first . ' ' . $last);
+        if ($first === '' || strlen($first) > 50) {
+            flash('error', 'Please enter your first name (50 characters max).');
+        } elseif ($last === '' || strlen($last) > 50) {
+            flash('error', 'Please enter your last name (50 characters max).');
         } elseif ($phone !== '' && !preg_match('/^[0-9+\-\s()]{7,20}$/', $phone)) {
             flash('error', 'Phone number looks invalid.');
         } else {
-            $pdo->prepare('UPDATE customer SET full_name = ?, phone = ?, address = ? WHERE customer_id = ?')
-                ->execute([$name, $phone ?: null, $addr ?: null, $cid]);
+            $pdo->prepare('UPDATE customer SET first_name = ?, last_name = ?, full_name = ?, phone = ?, address = ? WHERE customer_id = ?')
+                ->execute([$first, $last, $name, $phone ?: null, $addr ?: null, $cid]);
             $_SESSION['customer_name'] = $name;
             flash('success', 'Profile updated.');
         }
@@ -59,17 +64,20 @@ require __DIR__ . '/includes/header.php';
 </table></div>
 <?php endif; ?>
 
-<div class="form-row" style="align-items:start">
-  <form method="post" class="form-box" style="max-width:none">
+<div class="form-row account-forms">
+  <form method="post" class="form-box">
     <h3>Profile</h3>
     <?= csrf_field() ?><input type="hidden" name="action" value="profile">
     <div class="form-group"><label>Email</label><input type="email" value="<?= e($me['email']) ?>" disabled></div>
-    <div class="form-group"><label for="fn">Full name</label><input type="text" id="fn" name="full_name" value="<?= e($me['full_name']) ?>" required></div>
+    <div class="form-row">
+      <div class="form-group"><label for="fn">First name</label><input type="text" id="fn" name="first_name" value="<?= e($me['first_name']) ?>" required></div>
+      <div class="form-group"><label for="ln">Last name</label><input type="text" id="ln" name="last_name" value="<?= e($me['last_name']) ?>" required></div>
+    </div>
     <div class="form-group"><label for="ph">Mobile number</label><input type="tel" id="ph" name="phone" value="<?= e($me['phone']) ?>"></div>
     <div class="form-group"><label for="ad">Delivery address</label><input type="text" id="ad" name="address" value="<?= e($me['address']) ?>"></div>
     <button class="btn" type="submit">Save profile</button>
   </form>
-  <form method="post" class="form-box" style="max-width:none">
+  <form method="post" class="form-box">
     <h3>Change password</h3>
     <?= csrf_field() ?><input type="hidden" name="action" value="password">
     <?= pw_field('op', 'old_password', 'Current password', 'required') ?>

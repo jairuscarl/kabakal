@@ -38,7 +38,9 @@ CREATE TABLE admin (
 
 CREATE TABLE customer (
   customer_id  INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  full_name    VARCHAR(100) NOT NULL,
+  first_name   VARCHAR(50)  NOT NULL,
+  last_name    VARCHAR(50)  NOT NULL,
+  full_name    VARCHAR(100) NOT NULL,  -- convenience copy "first last", always kept in sync by the app
   email        VARCHAR(150) NOT NULL,
   phone        VARCHAR(30)  NULL,
   password     VARCHAR(255) NOT NULL,  -- store a hash
