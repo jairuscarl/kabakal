@@ -13,9 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_admin(['admin']);                                   // staff cannot delete
         $st = $pdo->prepare('SELECT image_url FROM equipment WHERE equipment_id = ?'); $st->execute([$id]);
         $img = $st->fetchColumn();
+        $media = product_media($id);
         try {
-            $pdo->prepare('DELETE FROM equipment WHERE equipment_id = ?')->execute([$id]);
+            $pdo->prepare('DELETE FROM equipment WHERE equipment_id = ?')->execute([$id]);   // gallery rows go too (ON DELETE CASCADE)
             delete_file($img);
+            foreach ($media as $m) delete_file($m['file_path']);
             flash('success', 'Product deleted.');
         } catch (PDOException $ex) {
             // order_item has a RESTRICT foreign key: products that were ordered cannot be deleted
@@ -45,8 +47,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         [$img, $imgErr] = upload_image('image', 'uploads/products');
         if (!$err && $imgErr) $err = $imgErr;
 
+        // Extra gallery photos and videos (several files per input)
+        $newMedia = [];
+        foreach (['gallery' => 'image', 'videos' => 'video'] as $field => $type) {
+            foreach (uploaded_files($field) as $f) {
+                if ($err) break 2;
+                [$path, $mErr] = $type === 'image' ? save_image($f, 'uploads/products') : save_video($f);
+                if ($mErr) $err = $f['name'] . ': ' . $mErr;
+                elseif ($path) $newMedia[] = [$type, $path];
+            }
+        }
+
         if ($err) {
             delete_file($img);
+            foreach ($newMedia as [, $path]) delete_file($path);
             flash('error', $err);
             redirect('admin/products.php?action=' . ($id ? "edit&id=$id" : 'add'));
         }
@@ -58,15 +72,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('UPDATE equipment SET name=?, category_id=?, price=?, description=?, status=?, is_featured=?, image_url=? WHERE equipment_id=?')
                 ->execute([$d['name'], $d['category_id'], $d['price'], $d['description'] ?: null, $d['status'], $d['featured'], $img ?: $old['image_url'], $id]);
             if ($img) delete_file($old['image_url']);
+            // Remove the gallery items the admin ticked
+            $remove = array_map('intval', (array)($_POST['remove_media'] ?? []));
+            foreach (product_media($id) as $m) {
+                if (in_array((int)$m['media_id'], $remove, true)) {
+                    $pdo->prepare('DELETE FROM product_media WHERE media_id = ?')->execute([$m['media_id']]);
+                    delete_file($m['file_path']);
+                }
+            }
             inv_change($id, 'available', (int)$d['stock'] - (int)$old['stock_quantity'], $aid, true);   // keep inventory in sync + stamp the date stock was added
             flash('success', 'Product updated.');
         } else {                                                     // ---- insert
             $pdo->prepare('INSERT INTO equipment (category_id, name, description, price, stock_quantity, image_url, is_featured, status)
                            VALUES (?, ?, ?, ?, 0, ?, ?, ?)')
                 ->execute([$d['category_id'], $d['name'], $d['description'] ?: null, $d['price'], $img, $d['featured'], $d['status']]);
-            inv_change((int)$pdo->lastInsertId(), 'available', (int)$d['stock'], $aid, true);
+            $id = (int)$pdo->lastInsertId();
+            inv_change($id, 'available', (int)$d['stock'], $aid, true);
             flash('success', 'Product added.');
         }
+        // New gallery items go after the existing ones
+        $st = $pdo->prepare('SELECT COALESCE(MAX(sort_order), 0) FROM product_media WHERE equipment_id = ?'); $st->execute([$id]);
+        $order = (int)$st->fetchColumn();
+        $ins = $pdo->prepare('INSERT INTO product_media (equipment_id, media_type, file_path, sort_order) VALUES (?, ?, ?, ?)');
+        foreach ($newMedia as [$type, $path]) $ins->execute([$id, $type, $path, ++$order]);
         redirect('admin/products.php');
     }
 }
@@ -105,7 +133,32 @@ if ($action === 'add' || $action === 'edit'):
   <div class="form-group"><label for="image">Photo</label>
     <img id="preview" src="<?= e(product_image($p['image_url'])) ?>" alt="" style="max-width:220px;margin-bottom:8px;border-radius:6px">
     <input type="file" id="image" name="image" accept="image/*" data-preview="#preview">
-    <p class="help">JPG, PNG, WEBP or GIF, up to <?= MAX_IMAGE_SIZE / 1048576 ?> MB. Leave empty to keep the current photo.</p></div>
+    <p class="help">JPG, PNG, WEBP or GIF, up to <?= MAX_IMAGE_SIZE / 1048576 ?> MB. Leave empty to keep the current photo.
+      This is the main photo shown on product cards and first in the gallery.</p></div>
+  <?php $media = $p['equipment_id'] ? product_media($p['equipment_id']) : []; ?>
+  <?php if ($media): ?>
+  <div class="form-group"><label>Gallery (tick to remove)</label>
+    <div class="media-admin">
+      <?php foreach ($media as $m): ?>
+      <label class="media-admin-item">
+        <?php if ($m['media_type'] === 'video'): ?>
+          <video src="<?= e(url($m['file_path'])) ?>" preload="metadata" muted></video><span class="media-tag">Video</span>
+        <?php else: ?>
+          <img src="<?= e(url($m['file_path'])) ?>" alt="">
+        <?php endif; ?>
+        <span class="check"><input type="checkbox" name="remove_media[]" value="<?= (int)$m['media_id'] ?>"> Remove</span>
+      </label>
+      <?php endforeach; ?>
+    </div></div>
+  <?php endif; ?>
+  <div class="form-row">
+    <div class="form-group"><label for="gallery">Add more photos</label>
+      <input type="file" id="gallery" name="gallery[]" accept="image/*" multiple>
+      <p class="help">Select several at once. Each up to <?= MAX_IMAGE_SIZE / 1048576 ?> MB.</p></div>
+    <div class="form-group"><label for="videos">Add videos</label>
+      <input type="file" id="videos" name="videos[]" accept="video/mp4" multiple>
+      <p class="help">MP4 only, each up to <?= MAX_VIDEO_SIZE / 1048576 ?> MB. All files in one save must fit the server limit (post_max_size: <?= e(ini_get('post_max_size')) ?>).</p></div>
+  </div>
   <div class="form-group"><label class="check"><input type="checkbox" name="is_featured" <?= $p['is_featured'] ? 'checked' : '' ?>> Show as featured on the Home page</label></div>
   <button class="btn" type="submit">Save product</button>
 </form>

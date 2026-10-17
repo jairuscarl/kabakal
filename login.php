@@ -3,9 +3,10 @@
 require_once __DIR__ . '/includes/init.php';
 if (is_logged_in()) redirect('my_account.php');
 
-// "next" = page to open after login (only simple file names like checkout.php are allowed)
+// "next" = page to open after login (only simple file names like checkout.php, optionally with
+// one number like product.php?id=3, so it can never point to another site)
 $next = $_GET['next'] ?? $_POST['next'] ?? '';
-if (!preg_match('/^[a-z_]+\.php$/', $next)) $next = 'my_account.php';
+if (!preg_match('/^[a-z_]+\.php(\?[a-z_]+=\d+)?$/', $next)) $next = 'my_account.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $st = $pdo->prepare('SELECT customer_id, full_name, password FROM customer WHERE email = ?');

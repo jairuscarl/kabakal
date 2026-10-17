@@ -2,6 +2,12 @@
 /** Customer-side header + navigation. Set $page_title before including. */
 $shop_name = setting('shop_name', 'Kabakal Fitness Equipment');
 $cart_total = cart_count();
+$unread = unread_count();
+$me_avatar = null;
+if (is_logged_in()) {
+    $st = $pdo->prepare('SELECT avatar_url FROM customer WHERE customer_id = ?'); $st->execute([$_SESSION['customer_id']]);
+    $me_avatar = $st->fetchColumn() ?: null;
+}
 $me_name = is_logged_in() ? (trim((string)($_SESSION['customer_name'] ?? '')) ?: 'Customer') : '';
 $current = basename($_SERVER['SCRIPT_NAME']);
 ?><!DOCTYPE html>
@@ -24,16 +30,23 @@ $current = basename($_SERVER['SCRIPT_NAME']);
       <a href="<?= url('index.php') ?>" class="<?= $current === 'index.php' ? 'active' : '' ?>">Home</a>
       <a href="<?= url('products.php') ?>" class="<?= in_array($current, ['products.php', 'product.php']) ? 'active' : '' ?>">Products</a>
       <a href="<?= url('reviews.php') ?>" class="<?= $current === 'reviews.php' ? 'active' : '' ?>">Reviews</a>
-      <?php if (is_logged_in()): ?>
-        <a href="<?= url('my_account.php') ?>" class="<?= $current === 'my_account.php' ? 'active' : '' ?>">My Account</a>
-        <a href="<?= url('logout.php') ?>" class="btn btn-sm btn-danger-solid">Logout</a>
-      <?php else: ?>
+      <?php if (!is_logged_in()): /* logged in: the profile picture on the right opens My Account (Logout is in there) */ ?>
         <a href="<?= url('login.php') ?>">Login</a>
         <a href="<?= url('register.php') ?>" class="btn btn-sm">Register</a>
       <?php endif; ?>
     </nav>
     <?php /* Top-right of the bar: the cart icon first, then the "Welcome, <name>!" greeting (only after login) hard against the right edge; the badge is the item count. */ ?>
     <div class="nav-right">
+    <span class="nav-icons">
+    <?php if (is_logged_in()): ?>
+    <a class="nav-cart nav-mail<?= in_array($current, ['notifications.php', 'messages.php']) ? ' active' : '' ?>" href="<?= url('notifications.php') ?>" title="Inbox" aria-label="Inbox<?php if ($unread): ?> (<?= $unread ?> new)<?php endif; ?>" data-unread-url="<?= url('notifications.php?unread=1') ?>">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </svg>
+      <span class="cart-badge"<?= $unread ? '' : ' hidden' ?>><?= $unread ?></span>
+    </a>
+    <?php endif; ?>
     <a class="nav-cart<?= $current === 'cart.php' ? ' active' : '' ?>" href="<?= url('cart.php') ?>" title="Cart" aria-label="Cart<?php if ($cart_total): ?> (<?= (int)$cart_total ?>)<?php endif; ?>">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <circle cx="8" cy="21" r="1" />
@@ -42,7 +55,18 @@ $current = basename($_SERVER['SCRIPT_NAME']);
       </svg>
       <?php if ($cart_total): ?><span class="cart-badge"><?= (int)$cart_total ?></span><?php endif; ?>
     </a>
-      <?php if ($me_name !== ''): ?><span class="nav-welcome">Welcome, <b><?= e($me_name) ?></b>!</span><?php endif; ?>
+    <?php if (is_logged_in()): ?>
+    <a class="nav-avatar<?= $current === 'my_account.php' ? ' active' : '' ?>" href="<?= url('my_account.php') ?>" title="My Account" aria-label="My Account">
+      <?= avatar_html($me_avatar, $me_name, 34) ?>
+    </a>
+    <?php endif; ?>
+    </span>
+      <?php if ($me_name !== ''): /* First name only, capped at 20 chars (name_limit adds "…" when cut); a longer name also gets a smaller-font class so "Welcome, Name!" fits the bar, and the title attribute reveals the uncapped name on hover. */
+        $me_raw   = preg_split('/\s+/', $me_name)[0];
+        $me_first = name_limit($me_raw);
+        $me_len   = function_exists('mb_strlen') ? mb_strlen($me_first, 'UTF-8') : strlen($me_first);
+        $me_fs    = $me_len > 16 ? ' nav-welcome-xs' : ($me_len > 12 ? ' nav-welcome-sm' : '');
+      ?><span class="nav-welcome<?= $me_fs ?>"<?= $me_first !== $me_raw ? ' title="' . e($me_raw) . '"' : '' ?>>Welcome, <b><?= e($me_first) ?></b>!</span><?php endif; ?>
     </div>
   </div>
 </header>

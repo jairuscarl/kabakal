@@ -53,17 +53,43 @@ img, video { max-width: 100%; display: block; }
    Now the sides keep their content and the links shrink + wrap instead. */
 .site-header .nav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; min-height: 64px; }
 .site-header .nav > .brand { grid-area: 1 / 1; justify-self: start; }
-/* flex-wrap: below ~1250px the 70px gaps gave .nav-links a min-content wider than the space
-   left between the logo and the "Welcome, name!" greeting, which squashed the logo to 0 and
-   pushed the greeting past the container (horizontal scroll). Wrapping keeps the bar inside
-   the container on every width; wide screens still get the single spaced-out row. */
+/* Single-row bar: below ~1250px the old 70px gaps + wrapping pushed links onto a second line
+   (or, with a long first name, the whole bar past the container). The links no longer wrap on
+   desktop - the media queries further down shrink gap/font/padding fluidly instead, so the logo,
+   links, cart and greeting always share ONE row from 861px up. */
 .site-header .nav-links { grid-area: 1 / 2; justify-content: center; gap: 70px; flex-wrap: wrap; }
 
 .site-header .nav-cart { grid-area: 1 / 3; justify-self: end; }
+/* Mail (inbox) + cart icons stay side by side, also on phones where .nav-right is display:contents */
+.nav-icons { display: flex; align-items: center; gap: 6px; }
+.site-header .nav-icons { grid-area: 1 / 3; justify-self: end; }
 .nav-cart { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 6px; border-radius: 8px; color: var(--white); }
 .nav-cart:hover, .nav-cart.active { color: var(--orange); text-decoration: none; }
 .nav-cart svg { display: block; }
 .nav-cart .cart-badge { position: absolute; top: -3px; right: -4px; min-width: 18px; text-align: center; line-height: 1.4; } /* Account greeting: "Welcome, Name!" sits to the right of the cart, hard against the top-right edge of the bar (logged-in customers only). */ .nav-right { display: flex; align-items: center; gap: 14px; } .site-header .nav-right { grid-area: 1 / 3; justify-self: end; } .nav-welcome { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--white); font-weight: 600; font-size: 20px; } .nav-welcome b { color: var(--orange); }
+/* Greeting font shrink (class chosen by includes/header.php from the capped first-name length):
+   13-16 chars -> 16px, 17+ chars -> 13px, so a long "Welcome, Name!" stays inside the auto-sized
+   right column instead of stretching it. The <=860px block further down still wins on specificity
+   and keeps the greeting at .9rem on small screens. */
+.nav-welcome-sm { font-size: 16px; }
+.nav-welcome-xs { font-size: 13px; }
+/* ONE ROW, always (desktop >= 861px): logo, links, cart and the "Welcome, name!" greeting must sit
+   side by side on a single line - links must never wrap to a second row and the bar must never push
+   the page sideways, even with the longest (20-char) first name. The fluid gap / font / padding
+   shrink the middle column as the viewport narrows so the row always fits (checked in Chrome from
+   861px to 1920px: single row, no overlap, no horizontal scroll). <=860px keeps the hamburger
+   layout below, which overrides these values. */
+@media (min-width: 861px) {
+  .site-header .nav-links { flex-wrap: nowrap; gap: clamp(8px, calc((100vw - 877px) / 8 + 8px), 60px); font-size: clamp(12px, 1.1vw, 16px); }
+  .site-header .nav-links a { padding: 8px clamp(5px, .85vw, 12px); }
+  .site-header .nav-links a.btn-sm { padding: 6px clamp(5px, .7vw, 10px); font-size: clamp(12px, .95vw, .9rem); }
+}
+/* Tightest desktop band (861-1000px): slim the logo and step the greeting down one size to buy the
+   single row ~42px; above 1000px both return to their normal sizes. */
+@media (min-width: 861px) and (max-width: 1000px) {
+  .brand-logo img { height: 44px; }
+  .site-header .nav-welcome { font-size: 12px; }
+}
 
 /* ---- Buttons ---- */
 .btn { display: inline-block; background: var(--orange); color: #000; border: 2px solid var(--orange); padding: 11px 22px; border-radius: 6px; font: 700 1rem "Oswald", Impact, sans-serif; text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none; }
@@ -137,6 +163,26 @@ img, video { max-width: 100%; display: block; }
 .detail { display: grid; gap: 32px; grid-template-columns: 1fr 1fr; align-items: start; }
 .detail img { width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #111; }
 .detail .price { font-size: 2.2rem; }
+.gallery { min-width: 0; outline: none; }
+.gallery-stage { position: relative; overflow: hidden; border-radius: 8px; border: 1px solid var(--line); background: #111; }
+.gallery-track { display: flex; transition: transform .35s ease; }
+.gallery-slide { flex: 0 0 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
+.detail .gallery-slide img, .gallery-slide video { width: 100%; height: 100%; object-fit: contain; border: 0; border-radius: 0; background: #111; }
+.gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: rgba(0,0,0,.6); color: var(--white); font-size: 1.2rem; cursor: pointer; z-index: 2; }
+.gallery-nav:hover { background: var(--orange); color: #000; }
+.gallery-prev { left: 10px; } .gallery-next { right: 10px; }
+.gallery-count { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,.6); padding: 2px 10px; border-radius: 12px; font-size: .85rem; z-index: 2; }
+.gallery-thumbs { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 4px; }
+.gallery-thumb { position: relative; flex: 0 0 72px; height: 72px; padding: 0; border: 2px solid var(--line); border-radius: 6px; overflow: hidden; background: #111; cursor: pointer; opacity: .65; }
+.gallery-thumb.active, .gallery-thumb:hover { border-color: var(--orange); opacity: 1; }
+.detail .gallery-thumb img, .gallery-thumb video { width: 100%; height: 100%; object-fit: cover; border: 0; border-radius: 0; pointer-events: none; }
+.gallery-thumb .play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--white); text-shadow: 0 0 6px #000; }
+/* Admin: existing gallery items with a "Remove" tick box */
+.media-admin { display: flex; flex-wrap: wrap; gap: 12px; }
+.media-admin-item { position: relative; width: 130px; display: flex; flex-direction: column; gap: 4px; }
+.media-admin-item img, .media-admin-item video { width: 130px; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: #111; }
+.media-tag { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.7); font-size: .75rem; padding: 1px 6px; border-radius: 4px; }
 .buy-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-top: 20px; }
 
 /* ---- Forms ---- */
@@ -376,3 +422,85 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
 .lightbox-close:hover, .lightbox-close:focus-visible { color: var(--orange); }
 body.lightbox-open { overflow: hidden; }
 
+
+/* ---- Inbox (notifications.php) ---- */
+.track-list { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); margin-bottom: 32px; }
+.track-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+.track-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.track-items { margin: 4px 0 14px; font-size: .9rem; }
+.track-steps { list-style: none; margin: 0; padding: 0; display: flex; }
+.track-steps li { flex: 1; position: relative; text-align: center; font-size: .82rem; color: var(--muted); padding-top: 24px; }
+.track-steps li::before { content: ""; position: absolute; top: 8px; left: -50%; width: 100%; height: 3px; background: var(--line); }
+.track-steps li:first-child::before { display: none; }
+.track-dot { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 15px; height: 15px; border-radius: 50%; background: var(--panel-2); border: 2px solid var(--line); z-index: 1; }
+.track-steps li.done, .track-steps li.current { color: var(--white); }
+.track-steps li.done::before, .track-steps li.current::before { background: var(--orange); }
+.track-steps li.done .track-dot { background: var(--orange); border-color: var(--orange); }
+.track-steps li.current .track-dot { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255,166,0,.25); }
+.track-steps li.current { font-weight: 700; color: var(--orange); }
+.inbox-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.inbox-list li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: var(--panel); border-top: 1px solid var(--line); }
+.inbox-list li:first-child { border-top: 0; }
+.inbox-list li.unread { background: var(--panel-2); border-left: 3px solid var(--orange); }
+.inbox-list li a { color: var(--white); } .inbox-list li a:hover { color: var(--orange); }
+.inbox-list time { font-size: .85rem; white-space: nowrap; }
+.inbox-new { background: var(--orange); color: #000; font-size: .72rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-right: 6px; text-transform: uppercase; }
+.inbox-toast { position: fixed; right: 16px; bottom: 16px; z-index: 100; background: var(--panel); border: 1px solid var(--orange); border-radius: 8px; padding: 12px 16px; box-shadow: 0 6px 24px rgba(0,0,0,.5); max-width: calc(100% - 32px); }
+
+/* ---- Messages (messages.php, admin/messages.php) ---- */
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); margin-bottom: 24px; }
+.tabs a { padding: 10px 18px; color: var(--muted); font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.tabs a:hover { color: var(--white); text-decoration: none; }
+.tabs a.active { color: var(--orange); border-bottom-color: var(--orange); }
+.msg-layout { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); align-items: start; }
+.msg-layout .form-box { margin: 0; max-width: none; }
+.conv-line { min-width: 0; flex: 1; }
+.conv-preview { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.chat-head h1 { font-size: clamp(1.4rem, 3vw, 2rem); margin: 0; }
+.chat { display: flex; flex-direction: column; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; max-height: 60vh; overflow-y: auto; }
+.chat-msg { max-width: min(75%, 560px); display: flex; flex-direction: column; }
+.chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+.chat-msg.theirs { align-self: flex-start; }
+.chat-bubble { padding: 10px 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line); overflow-wrap: anywhere; }
+.chat-msg.mine .chat-bubble { background: var(--orange); color: #000; border-color: var(--orange); border-bottom-right-radius: 4px; }
+.chat-msg.theirs .chat-bubble { border-bottom-left-radius: 4px; }
+.chat-meta { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+.chat-reply { display: flex; gap: 10px; align-items: flex-end; margin-top: 14px; }
+.chat-reply textarea { flex: 1; min-height: 70px; }
+tr.row-unread td { background: var(--panel-2); }
+.badge-open { background: var(--green); color: #000; } .badge-closed { background: var(--line); color: var(--white); }
+@media (max-width: 860px) {
+  .msg-layout { grid-template-columns: 1fr; }
+  .chat-msg { max-width: 90%; }
+  .chat-reply { flex-direction: column; align-items: stretch; }
+}
+
+/* ---- Profile picture (navbar + My Account) ---- */
+.avatar { display: inline-block; border-radius: 50%; object-fit: cover; background: var(--panel-2); flex: 0 0 auto; }
+.avatar-letter { display: inline-flex; align-items: center; justify-content: center; background: var(--orange); color: #000; font: 700 1rem "Oswald", Impact, sans-serif; }
+.nav-avatar { display: inline-flex; padding: 2px; border-radius: 50%; border: 2px solid transparent; margin-left: 4px; }
+.nav-avatar:hover, .nav-avatar.active { border-color: var(--orange); text-decoration: none; }
+
+/* ---- My Account: side menu with section buttons ---- */
+.account { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; align-items: start; }
+.account-side { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; position: sticky; top: 90px; }
+.account-me { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding-bottom: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+.account-me strong { font-size: 1.1rem; overflow-wrap: anywhere; }
+.account-me .muted { font-size: .85rem; overflow-wrap: anywhere; }
+.account-menu { display: flex; flex-direction: column; gap: 6px; }
+.account-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 6px; color: var(--white); font-weight: 600; }
+.account-menu a:hover { background: var(--panel-2); text-decoration: none; }
+.account-menu a.active { background: var(--orange); color: #000; }
+.account-menu .cart-badge { margin-left: auto; }
+.account-side .btn-block { margin-top: 14px; }
+.account-main > .form-box { margin: 0; max-width: 640px; }
+.avatar-edit { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; }
+.avatar-edit img, .avatar-edit .avatar { width: 96px; height: 96px; font-size: 42px; }
+@media (max-width: 860px) {
+  .account { grid-template-columns: 1fr; }
+  .account-side { position: static; }
+  .account-me { flex-direction: row; text-align: left; }
+  .account-menu { flex-direction: row; flex-wrap: wrap; }
+  .account-menu a { flex: 1 1 auto; justify-content: center; }
+}

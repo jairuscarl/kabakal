@@ -16,12 +16,48 @@ $reviews = review_fetch((int)$p['equipment_id']);
 $replies = review_replies($reviews);
 [$total, $avg] = review_stats($reviews);
 
+// Gallery: main photo first, then the extra photos / videos added in Admin > Products
+$slides = array_merge([['media_type' => 'image', 'src' => product_image($p['image_url'])]],
+    array_map(fn($m) => ['media_type' => $m['media_type'], 'src' => url($m['file_path'])], product_media($p['equipment_id'])));
+
 $page_title = $p['name'];
 require __DIR__ . '/includes/header.php';
 ?>
 <p><a href="<?= url('products.php') ?>">&larr; Back to products</a></p>
 <div class="detail">
-  <img src="<?= e(product_image($p['image_url'])) ?>" alt="<?= e($p['name']) ?>">
+  <div class="gallery" data-gallery>
+    <div class="gallery-stage">
+      <div class="gallery-track">
+        <?php foreach ($slides as $i => $s): ?>
+        <div class="gallery-slide" aria-hidden="<?= $i ? 'true' : 'false' ?>">
+          <?php if ($s['media_type'] === 'video'): ?>
+            <video src="<?= e($s['src']) ?>" controls playsinline preload="metadata"></video>
+          <?php else: ?>
+            <img src="<?= e($s['src']) ?>" alt="<?= e($p['name']) ?> — photo <?= $i + 1 ?>">
+          <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <?php if (count($slides) > 1): ?>
+        <button type="button" class="gallery-nav gallery-prev" aria-label="Previous">&#10094;</button>
+        <button type="button" class="gallery-nav gallery-next" aria-label="Next">&#10095;</button>
+        <span class="gallery-count">1 / <?= count($slides) ?></span>
+      <?php endif; ?>
+    </div>
+    <?php if (count($slides) > 1): ?>
+    <div class="gallery-thumbs">
+      <?php foreach ($slides as $i => $s): ?>
+      <button type="button" class="gallery-thumb<?= $i ? '' : ' active' ?>" aria-label="Show item <?= $i + 1 ?>">
+        <?php if ($s['media_type'] === 'video'): ?>
+          <video src="<?= e($s['src']) ?>#t=0.5" preload="metadata" muted></video><span class="play-icon">&#9654;</span>
+        <?php else: ?>
+          <img src="<?= e($s['src']) ?>" alt="">
+        <?php endif; ?>
+      </button>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+  </div>
   <div>
     <span class="card-cat"><?= e($p['category_name']) ?></span>
     <h1><?= e($p['name']) ?></h1>
@@ -43,6 +79,8 @@ require __DIR__ . '/includes/header.php';
     <?php else: ?>
       <p class="muted">This item is currently out of stock.</p>
     <?php endif; ?>
+    <?php $ask = 'messages.php?product=' . (int)$p['equipment_id']; ?>
+    <p><a class="btn btn-outline btn-sm" href="<?= url(is_logged_in() ? $ask : 'login.php?next=' . urlencode($ask)) ?>">&#9993; Ask the shop about this product</a></p>
   </div>
 </div>
 <h2>Customer reviews</h2>

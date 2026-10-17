@@ -40,10 +40,94 @@ try {
     }
 } catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
 
+// Customer profile picture
+try {
+    $has_avatar = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS
+                               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customer'
+                                 AND COLUMN_NAME = 'avatar_url'")->fetchColumn();
+    if (!$has_avatar) $pdo->exec('ALTER TABLE customer ADD COLUMN avatar_url VARCHAR(255) NULL AFTER address');
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
+// Extra product photos / videos (the gallery on the product page). equipment.image_url stays the main photo.
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS product_media (
+        media_id     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        equipment_id INT UNSIGNED NOT NULL,
+        media_type   ENUM('image','video') NOT NULL,
+        file_path    VARCHAR(255) NOT NULL,
+        sort_order   INT NOT NULL DEFAULT 0,
+        created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (media_id),
+        KEY idx_media_equipment (equipment_id, sort_order),
+        CONSTRAINT fk_media_equipment FOREIGN KEY (equipment_id)
+          REFERENCES equipment (equipment_id) ON UPDATE CASCADE ON DELETE CASCADE
+    ) ENGINE=InnoDB");
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
+// Customer inbox: order / payment updates shown under the mail icon in the navbar.
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS notification (
+        notification_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        customer_id     INT UNSIGNED NOT NULL,
+        order_id        INT UNSIGNED NULL,
+        message         VARCHAR(255) NOT NULL,
+        is_read         TINYINT(1) NOT NULL DEFAULT 0,
+        created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (notification_id),
+        KEY idx_notification_customer (customer_id, is_read),
+        CONSTRAINT fk_notification_customer FOREIGN KEY (customer_id)
+          REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE CASCADE
+    ) ENGINE=InnoDB");
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
+// Message box between customers and the shop owner (messages.php, admin/messages.php, includes/messages.php).
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS conversation (
+        conversation_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        customer_id     INT UNSIGNED NOT NULL,
+        equipment_id    INT UNSIGNED NULL,
+        subject         VARCHAR(150) NOT NULL,
+        status          ENUM('open','closed') NOT NULL DEFAULT 'open',
+        customer_unread TINYINT(1) NOT NULL DEFAULT 0,
+        admin_unread    TINYINT(1) NOT NULL DEFAULT 1,
+        last_message_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (conversation_id),
+        KEY idx_conversation_customer (customer_id),
+        CONSTRAINT fk_conversation_customer FOREIGN KEY (customer_id)
+          REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE CASCADE,
+        CONSTRAINT fk_conversation_equipment FOREIGN KEY (equipment_id)
+          REFERENCES equipment (equipment_id) ON UPDATE CASCADE ON DELETE SET NULL
+    ) ENGINE=InnoDB");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS message (
+        message_id      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        conversation_id INT UNSIGNED NOT NULL,
+        sender          ENUM('customer','admin') NOT NULL,
+        admin_id        INT UNSIGNED NULL,
+        body            TEXT NOT NULL,
+        created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (message_id),
+        KEY idx_message_conversation (conversation_id),
+        CONSTRAINT fk_message_conversation FOREIGN KEY (conversation_id)
+          REFERENCES conversation (conversation_id) ON UPDATE CASCADE ON DELETE CASCADE
+    ) ENGINE=InnoDB");
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
 // ---------- Small helpers ----------
 
 /** Escape text before printing it in HTML (prevents XSS). */
 function e($text) { return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8'); }
+
+/** Cap a name for display: at most $max characters, with "…" appended when it was cut.
+ *  UTF-8 aware (counts characters, not bytes) so names like "José" cut safely. */
+function name_limit($text, $max = 20) {
+    $text = trim((string)$text);
+    if ($text === '' || $max < 1) return $text;
+    $len = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
+    if ($len <= $max) return $text;
+    $head = function_exists('mb_substr') ? mb_substr($text, 0, $max - 1, 'UTF-8') : substr($text, 0, $max - 1);
+    return $head . '…';
+}
 
 /** Format a number as pesos: 1500 -> ₱1,500.00 */
 function peso($n) { return '₱' . number_format((float)$n, 2); }
@@ -115,7 +199,12 @@ function require_admin(array $roles = []) {
  */
 function upload_image($field, $folder) {
     if (!isset($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) return [null, null];
-    $f = $_FILES[$field];
+    return save_image($_FILES[$field], $folder);
+}
+
+/** Save one entry of $_FILES (see uploaded_files()) as an image. Returns [relative_path, error_message]. */
+function save_image($f, $folder) {
+    if ($f['error'] === UPLOAD_ERR_NO_FILE) return [null, null];
     if ($f['error'] !== UPLOAD_ERR_OK)  return [null, 'Upload failed (file may be too large for the server).'];
     if ($f['size'] > MAX_IMAGE_SIZE)    return [null, 'Image is too big. Maximum is ' . (MAX_IMAGE_SIZE / 1048576) . ' MB.'];
 
@@ -140,7 +229,12 @@ function upload_image($field, $folder) {
 /** Save an uploaded MP4 video into assets/videos. Returns [relative_path, error]. */
 function upload_video($field) {
     if (!isset($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) return [null, null];
-    $f = $_FILES[$field];
+    return save_video($_FILES[$field]);
+}
+
+/** Save one entry of $_FILES (see uploaded_files()) as an MP4 video. Returns [relative_path, error]. */
+function save_video($f) {
+    if ($f['error'] === UPLOAD_ERR_NO_FILE) return [null, null];
     if ($f['error'] !== UPLOAD_ERR_OK) return [null, 'Video upload failed. The file may be larger than the server limit (upload_max_filesize).'];
     if ($f['size'] > MAX_VIDEO_SIZE)   return [null, 'Video is too big. Maximum is ' . (MAX_VIDEO_SIZE / 1048576) . ' MB.'];
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
@@ -155,11 +249,39 @@ function upload_video($field) {
     return ["assets/videos/$name", null];
 }
 
+/** Files from a multi-file input (<input type="file" name="x[]" multiple>) as a plain list of $_FILES-style arrays. */
+function uploaded_files($field) {
+    $list = [];
+    if (empty($_FILES[$field]['name']) || !is_array($_FILES[$field]['name'])) return $list;
+    foreach ($_FILES[$field]['name'] as $i => $name) {
+        if ($_FILES[$field]['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
+        $list[] = ['name' => $name, 'tmp_name' => $_FILES[$field]['tmp_name'][$i],
+                   'size' => $_FILES[$field]['size'][$i], 'error' => $_FILES[$field]['error'][$i]];
+    }
+    return $list;
+}
+
+/** Extra photos / videos of a product, in display order. */
+function product_media($eid) {
+    global $pdo;
+    $st = $pdo->prepare('SELECT * FROM product_media WHERE equipment_id = ? ORDER BY sort_order, media_id');
+    $st->execute([(int)$eid]);
+    return $st->fetchAll();
+}
+
 /** Delete a file we previously saved (only inside uploads/ or assets/videos/). */
 function delete_file($relPath) {
-    if ($relPath && preg_match('#^(uploads/(products|proofs|posters|settings|reviews)|assets/videos)/[A-Za-z0-9._-]+$#', $relPath)) {
+    if ($relPath && preg_match('#^(uploads/(products|proofs|posters|settings|reviews|avatars)|assets/videos)/[A-Za-z0-9._-]+$#', $relPath)) {
         @unlink(ROOT_PATH . '/' . $relPath);
     }
+}
+
+/** Round profile picture: the uploaded photo, or the first letter of the name on an orange circle. */
+function avatar_html($path, $name, $size = 36) {
+    $style = 'width:' . (int)$size . 'px;height:' . (int)$size . 'px;font-size:' . round($size * .45) . 'px';
+    if ($path) return '<img class="avatar" src="' . e(url($path)) . '" alt="" style="' . $style . '">';
+    $letter = function_exists('mb_substr') ? mb_strtoupper(mb_substr(trim((string)$name) ?: '?', 0, 1)) : strtoupper(substr(trim((string)$name) ?: '?', 0, 1));
+    return '<span class="avatar avatar-letter" aria-hidden="true" style="' . $style . '">' . e($letter) . '</span>';
 }
 
 /** Product image URL, or a placeholder when none. */
@@ -348,9 +470,59 @@ function set_order_status($order_id, $new, $admin_id = null) {
             $pdo->prepare('UPDATE orders SET shipping_date = COALESCE(shipping_date, CURDATE()) WHERE order_id = ?')->execute([$order_id]);
         }
         $pdo->commit();
-        return true;
     } catch (Throwable $ex) { $pdo->rollBack(); throw $ex; }
+    // Tell the customer when the SHOP changed the order (not when they cancelled it themselves)
+    if ($admin_id !== null) notify_order($order_id, order_status_message($order_id, $new));
+    return true;
 }
+
+// ---------- Customer notifications (mail icon in the navbar) ----------
+
+/** Add a message to a customer's inbox. */
+function notify($customer_id, $message, $order_id = null) {
+    global $pdo;
+    $pdo->prepare('INSERT INTO notification (customer_id, order_id, message) VALUES (?, ?, ?)')
+        ->execute([(int)$customer_id, $order_id ? (int)$order_id : null, mb_substr($message, 0, 255)]);
+}
+
+/** Add a message to the inbox of the customer who owns an order. */
+function notify_order($order_id, $message) {
+    global $pdo;
+    $st = $pdo->prepare('SELECT customer_id FROM orders WHERE order_id = ?'); $st->execute([$order_id]);
+    if ($cid = $st->fetchColumn()) notify($cid, $message, $order_id);
+}
+
+function order_status_message($order_id, $status) {
+    $n = '#' . (int)$order_id;
+    return [
+        'pending'   => "Order $n was moved back to pending.",
+        'paid'      => "Order $n is fully paid and confirmed. We are preparing your items.",
+        'shipped'   => "Order $n has been shipped and is on its way!",
+        'delivered' => "Order $n was delivered. Enjoy your equipment, and leave us a review!",
+        'cancelled' => "Order $n was cancelled by the shop.",
+    ][$status] ?? "Order $n was updated.";
+}
+
+/** Number of unread order updates for the logged-in customer. */
+function unread_notification_count() {
+    global $pdo;
+    if (!is_logged_in()) return 0;
+    $st = $pdo->prepare('SELECT COUNT(*) FROM notification WHERE customer_id = ? AND is_read = 0');
+    $st->execute([$_SESSION['customer_id']]);
+    return (int)$st->fetchColumn();
+}
+
+/** Number of conversations with an unread reply from the shop. */
+function unread_message_count() {
+    global $pdo;
+    if (!is_logged_in()) return 0;
+    $st = $pdo->prepare('SELECT COUNT(*) FROM conversation WHERE customer_id = ? AND customer_unread = 1');
+    $st->execute([$_SESSION['customer_id']]);
+    return (int)$st->fetchColumn();
+}
+
+/** Total for the badge on the navbar mail icon. */
+function unread_count() { return unread_notification_count() + unread_message_count(); }
 
 // ---------- Orders & payments helpers ----------
 

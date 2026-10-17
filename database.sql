@@ -45,6 +45,7 @@ CREATE TABLE customer (
   phone        VARCHAR(30)  NULL,
   password     VARCHAR(255) NOT NULL,  -- store a hash
   address      VARCHAR(255) NULL,
+  avatar_url   VARCHAR(255) NULL,      -- ADDED: profile picture (uploads/avatars/...)
   created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (customer_id),
   UNIQUE KEY uq_customer_email (email)
@@ -70,6 +71,20 @@ CREATE TABLE equipment (
     REFERENCES category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT,
   CONSTRAINT fk_equipment_supplier FOREIGN KEY (supplier_id)
     REFERENCES supplier (supplier_id) ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ADDED: extra product photos / videos for the gallery on the product page (equipment.image_url stays the main photo)
+CREATE TABLE product_media (
+  media_id      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  equipment_id  INT UNSIGNED NOT NULL,
+  media_type    ENUM('image','video') NOT NULL,
+  file_path     VARCHAR(255) NOT NULL,
+  sort_order    INT NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (media_id),
+  KEY idx_media_equipment (equipment_id, sort_order),
+  CONSTRAINT fk_media_equipment FOREIGN KEY (equipment_id)
+    REFERENCES equipment (equipment_id) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE inventory (
@@ -148,6 +163,52 @@ CREATE TABLE order_item (
     REFERENCES orders (order_id) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT fk_order_item_equipment FOREIGN KEY (equipment_id)
     REFERENCES equipment (equipment_id) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- ADDED: customer inbox (mail icon in the navbar): order / payment update messages
+CREATE TABLE notification (
+  notification_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  customer_id     INT UNSIGNED NOT NULL,
+  order_id        INT UNSIGNED NULL,
+  message         VARCHAR(255) NOT NULL,
+  is_read         TINYINT(1) NOT NULL DEFAULT 0,
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (notification_id),
+  KEY idx_notification_customer (customer_id, is_read),
+  CONSTRAINT fk_notification_customer FOREIGN KEY (customer_id)
+    REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ADDED: message box between customers and the shop owner (general or about one product)
+CREATE TABLE conversation (
+  conversation_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  customer_id     INT UNSIGNED NOT NULL,
+  equipment_id    INT UNSIGNED NULL,               -- NULL = general question
+  subject         VARCHAR(150) NOT NULL,
+  status          ENUM('open','closed') NOT NULL DEFAULT 'open',
+  customer_unread TINYINT(1) NOT NULL DEFAULT 0,   -- shop replied, customer has not opened it yet
+  admin_unread    TINYINT(1) NOT NULL DEFAULT 1,   -- customer wrote, admin has not opened it yet
+  last_message_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (conversation_id),
+  KEY idx_conversation_customer (customer_id),
+  CONSTRAINT fk_conversation_customer FOREIGN KEY (customer_id)
+    REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_conversation_equipment FOREIGN KEY (equipment_id)
+    REFERENCES equipment (equipment_id) ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE message (
+  message_id      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  conversation_id INT UNSIGNED NOT NULL,
+  sender          ENUM('customer','admin') NOT NULL,
+  admin_id        INT UNSIGNED NULL,               -- which admin replied
+  body            TEXT NOT NULL,
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (message_id),
+  KEY idx_message_conversation (conversation_id),
+  CONSTRAINT fk_message_conversation FOREIGN KEY (conversation_id)
+    REFERENCES conversation (conversation_id) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE payment (

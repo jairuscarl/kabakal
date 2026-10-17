@@ -9,7 +9,7 @@ require_login();
 
 $order_id = (int)($_GET['id'] ?? 0);
 $rows = fetch_orders('AND o.order_id = ? AND o.customer_id = ?', [$order_id, $_SESSION['customer_id']]);
-if (!$rows) { flash('error', 'Order not found.'); redirect('my_account.php'); }
+if (!$rows) { flash('error', 'Order not found.'); redirect('my_account.php?tab=orders'); }
 $order = $rows[0];
 
 // Payments already sent for this order
@@ -150,5 +150,5 @@ require __DIR__ . '/includes/header.php';
     <?php endif; ?>
   </aside>
 </div>
-<p><a href="<?= url('my_account.php') ?>">&larr; Back to My Account</a></p>
+<p><a href="<?= url('my_account.php?tab=orders') ?>">&larr; Back to my orders</a></p>
 <?php require __DIR__ . '/includes/footer.php'; ?>

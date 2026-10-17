@@ -6,19 +6,21 @@ $aid = $_SESSION['admin_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pid = (int)($_POST['payment_id'] ?? 0);
-    $st = $pdo->prepare("SELECT order_id FROM payment WHERE payment_id = ? AND payment_status = 'pending'");
+    $st = $pdo->prepare("SELECT order_id, amount FROM payment WHERE payment_id = ? AND payment_status = 'pending'");
     $st->execute([$pid]);
-    $order_id = $st->fetchColumn();
+    [$order_id, $amount] = $st->fetch(PDO::FETCH_NUM) ?: [null, 0];
 
     if (!$order_id) {
         flash('error', 'That payment was already handled.');
     } elseif (($_POST['action'] ?? '') === 'verify') {
         $pdo->prepare("UPDATE payment SET payment_status = 'paid', payment_date = CURDATE(), verified_by = ? WHERE payment_id = ?")->execute([$aid, $pid]);
+        notify_order($order_id, 'Your payment of ' . peso($amount) . " for order #$order_id was verified.");
         refresh_order_after_payment($order_id, $aid);            // marks the order Paid when fully paid
         flash('success', 'Payment verified.');
     } elseif (($_POST['action'] ?? '') === 'reject') {
         $reason = trim($_POST['remarks'] ?? '') ?: 'Payment proof was rejected. Please send a clear receipt again.';
         $pdo->prepare("UPDATE payment SET payment_status = 'failed', verified_by = ?, remarks = ? WHERE payment_id = ?")->execute([$aid, substr($reason, 0, 255), $pid]);
+        notify_order($order_id, "Your payment for order #$order_id was rejected: $reason Please upload a new proof.");
         flash('success', 'Payment rejected. The customer can upload a new proof.');
     }
     // go back to where the admin came from (only allow our own two pages)

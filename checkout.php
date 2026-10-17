@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Close this cart; a fresh one is created next time
             $pdo->prepare("UPDATE cart SET status = 'checked_out' WHERE cart_id = ?")->execute([cart_id()]);
             $pdo->commit();
+            notify($customer['customer_id'], "Order #$order_id placed. Send your GCash payment so we can confirm it.", $order_id);
             flash('success', "Order #$order_id placed! Please send your GCash payment below.");
             redirect("order_confirm.php?id=$order_id");
         } catch (RuntimeException $ex) {
