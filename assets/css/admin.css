@@ -209,6 +209,14 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 .admin-theme .admin-nav a.btn { color: var(--sidebar-text); background: transparent; border: 1px solid #3a3f47; }
 .admin-theme .admin-nav a.btn:hover { color: #fff; background: #2a2e35; border-color: #4a505a; }
 
+/* Menu icons: icon, then the label; the Payments / Messages counter is pushed to the right edge */
+.admin-theme .admin-nav a { display: inline-flex; align-items: center; gap: .3em; }   /* one space between icon and label */
+.admin-theme .admin-nav .nav-icon { flex: 0 0 auto; display: block; opacity: .75; }
+.admin-theme .admin-nav a:hover .nav-icon, .admin-theme .admin-nav a.active .nav-icon { opacity: 1; }
+.admin-theme .admin-nav .nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-theme .admin-nav .cart-badge { margin-left: auto; }
+.admin-theme .admin-nav a.btn { justify-content: center; }
+
 /* Desktop (861px and up): the menu is a fixed column on the left edge.
    Smaller screens keep the top bar with the hamburger (rules in style.css's 860px media query). */
 @media (min-width: 861px) {
@@ -221,7 +229,7 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
   .admin-layout .admin-bar .brand-logo img { width: 150px; height: auto; }
   .admin-layout .admin-bar .theme-toggle { position: absolute; top: 20px; right: 14px; margin: 0; }
   .admin-layout .admin-nav { flex: 1; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 1px; }
-  .admin-layout .admin-nav a { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  .admin-layout .admin-nav a { display: flex; align-items: center; justify-content: flex-start; gap: .3em;
     padding: 8px 10px 8px 12px; border-radius: 5px; border-left: 2px solid transparent; font-size: .92rem; }
   .admin-layout .admin-nav a:hover { background: rgba(255, 255, 255, .05); text-decoration: none; }
   .admin-layout .admin-nav a.active { background: rgba(255, 255, 255, .08); border-left-color: var(--sidebar-accent); color: #fff; }
