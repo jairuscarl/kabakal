@@ -19,6 +19,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cart_set($eid, $qty);
             if ($action === 'add') flash('success', 'Added to your cart.');
         }
+    } elseif ($action === 'buy_now') {
+        // "Buy now": check out this one item straight away; the cart is left as it is
+        $st = $pdo->prepare("SELECT stock_quantity FROM equipment WHERE equipment_id = ? AND status = 'active'");
+        $st->execute([$eid]);
+        $stock = (int)$st->fetchColumn();
+        if ($stock < 1) { flash('error', 'Sorry, that item is not available.'); redirect('product.php?id=' . $eid); }
+        $qty = min(max(1, (int)($_POST['quantity'] ?? 1)), $stock);
+        $_SESSION['buy_now'] = [$eid => $qty];
+        redirect('checkout.php?buy_now=1');
     } elseif ($action === 'remove') {
         cart_set($eid, 0);
         flash('info', 'Item removed from your cart.');

@@ -162,3 +162,23 @@ document.querySelectorAll('[data-gallery]').forEach(function (g) {
   setInterval(check, 30000);
   document.addEventListener('visibilitychange', check);
 })();
+
+// Admin light / dark mode button (theme_toggle_button() in includes/init.php). The choice is kept in
+// this browser only; admin_theme_script() in the page <head> applies it before the page is drawn.
+document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
+  function label() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var text = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    btn.setAttribute('aria-label', text);
+    btn.setAttribute('title', text);
+    btn.setAttribute('aria-pressed', dark);
+  }
+  label();
+  btn.addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('admin-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    label();
+  });
+});

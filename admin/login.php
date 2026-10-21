@@ -23,10 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="<?= url('assets/images/favicon.png') ?>">
   <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
-</head><body>
+  <link rel="stylesheet" href="<?= url('assets/css/admin.css') ?>">
+  <?= admin_theme_script() ?>
+</head><body class="admin-theme">
+<?= theme_toggle_button('theme-toggle-floating') ?>
 <div class="admin-login"><div class="form-box" style="width:100%">
   <div class="login-logo"><img src="<?= url('assets/images/logo.png') ?>" alt="Kabakal Fitness Equipment" width="720" height="229"></div>
-  <h1 class="brand" style="text-align:center">STAFF <span>LOGIN</span></h1>
+  <h1 class="brand" style="text-align:center">Staff login</h1>
   <?php show_flash(); ?>
   <form method="post">
     <?= csrf_field() ?>

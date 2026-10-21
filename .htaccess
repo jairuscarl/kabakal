@@ -1,0 +1,4 @@
+# Composer files list the libraries and versions used; no need to serve them.
+<FilesMatch "^composer\.(json|lock)$">
+    Require all denied
+</FilesMatch>

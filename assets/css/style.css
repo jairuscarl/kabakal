@@ -504,3 +504,26 @@ tr.row-unread td { background: var(--panel-2); }
   .account-menu { flex-direction: row; flex-wrap: wrap; }
   .account-menu a { flex: 1 1 auto; justify-content: center; }
 }
+
+/* ---- Buy buttons: cart icon (add to cart) + Buy now ---- */
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; padding: 9px 14px; }
+.btn-icon svg { display: block; }
+.buy-row .btn-buy { flex: 1; min-width: 120px; }
+.buy-row-sm { margin-top: 8px; gap: 8px; flex-wrap: nowrap; align-items: stretch; }
+.card-body .buy-row-sm .btn { margin-top: 0; }
+.buy-row-sm .btn-icon { padding: 5px 10px; }
+.buy-row-sm .btn-buy { min-width: 0; }
+.card-body h3 a { color: inherit; } .card-body h3 a:hover { color: var(--orange); text-decoration: none; }
+
+/* ---- Checkout: payment method choice ---- */
+.pay-methods { border: 0; padding: 0; margin: 0 0 18px; display: grid; gap: 10px; }
+.pay-methods legend { font-weight: 600; margin-bottom: 8px; padding: 0; }
+.pay-option { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 2px solid var(--line); border-radius: 8px; cursor: pointer; background: var(--panel-2); }
+.pay-option:hover { border-color: var(--muted); }
+.pay-option:has(input:checked) { border-color: var(--orange); }
+.pay-option input { width: auto; margin-top: 4px; accent-color: var(--orange); }
+.pay-option small { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
+
+/* ---- Admin report downloads (Excel / PDF / CSV buttons) ---- */
+.export-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.export-bar .muted { font-size: .9rem; }

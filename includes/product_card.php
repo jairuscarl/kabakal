@@ -7,10 +7,14 @@ function product_card($p) { ?>
     </a>
     <div class="card-body">
       <span class="card-cat"><?= e($p['category_name']) ?></span>
-      <h3><?= e($p['name']) ?></h3>
+      <h3><a href="<?= url('product.php?id=' . (int)$p['equipment_id']) ?>"><?= e($p['name']) ?></a></h3>
       <span class="price"><?= peso($p['price']) ?></span>
       <?= $p['stock_quantity'] > 0 ? badge('available') : badge('out of stock') ?>
-      <a class="btn btn-sm" href="<?= url('product.php?id=' . (int)$p['equipment_id']) ?>">View details</a>
+      <?php if ($p['stock_quantity'] > 0): ?>
+        <?= buy_buttons($p) ?>
+      <?php else: ?>
+        <a class="btn btn-sm" href="<?= url('product.php?id=' . (int)$p['equipment_id']) ?>">View details</a>
+      <?php endif; ?>
     </div>
   </article>
 <?php }

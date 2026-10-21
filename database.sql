@@ -138,6 +138,7 @@ CREATE TABLE orders (
   customer_id       INT UNSIGNED NOT NULL,
   order_date        DATE NOT NULL DEFAULT (CURRENT_DATE),
   total_amount      DECIMAL(12,2) NOT NULL DEFAULT 0.00 CHECK (total_amount >= 0),
+  payment_method    ENUM('gcash','cod') NOT NULL DEFAULT 'gcash',   -- ADDED: GCash or Cash on Delivery
   status            ENUM('pending','paid','shipped','delivered','cancelled')
                     NOT NULL DEFAULT 'pending',
   shipping_date     DATE NULL,

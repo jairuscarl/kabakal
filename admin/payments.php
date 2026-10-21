@@ -28,18 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('admin/' . (preg_match('/^(payments\.php|order_view\.php\?id=\d+)$/', $back) ? $back : 'payments.php'));
 }
 
-$pending = $pdo->query("SELECT p.*, c.full_name FROM payment p JOIN orders o ON o.order_id = p.order_id JOIN customer c ON c.customer_id = o.customer_id
-                        WHERE p.payment_status = 'pending' ORDER BY p.payment_id")->fetchAll();
+require_once __DIR__ . '/../includes/reports.php';   // same lists the Excel/PDF/CSV download uses
+$pending = pending_payments_rows();
 
 $bal_filter = $_GET['pay'] ?? '';
-$owing = array_filter(fetch_orders("AND o.status <> 'cancelled'"), fn($o) => $o['balance'] > 0
-        && ($bal_filter === '' || ($bal_filter === 'unpaid' && $o['pay_state'] === 'Unpaid') || ($bal_filter === 'partial' && $o['pay_state'] === 'Partially Paid')));
+$owing = balance_report_rows($bal_filter);
 $owing_total = array_sum(array_column($owing, 'balance'));
 
 $page_title = 'Payments';
 require __DIR__ . '/_header.php';
 ?>
-<h1>Payments</h1>
+<div class="page-head"><h1>Payments</h1><?= export_buttons('payments', report_filters(['bal' => $bal_filter])) ?></div>
 <h2>Waiting for verification (<?= count($pending) ?>)</h2>
 <div class="table-wrap"><table>
   <tr><th>Order</th><th>Customer</th><th>Amount</th><th>GCash ref.</th><th>Receipt</th><th>Sent</th><th>Action</th></tr>

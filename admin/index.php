@@ -3,19 +3,9 @@
 require_once __DIR__ . '/../includes/init.php';
 require_admin();
 
-$count = fn($sql) => (int)$pdo->query($sql)->fetchColumn();
-$stats = [
-    'Products'             => $count("SELECT COUNT(*) FROM equipment"),
-    'Orders'               => $count("SELECT COUNT(*) FROM orders"),
-    'Customers'            => $count("SELECT COUNT(*) FROM customer"),
-    'Pending verification' => $count("SELECT COUNT(*) FROM payment WHERE payment_status = 'pending'"),
-    'Out of stock items'   => $count("SELECT COUNT(*) FROM equipment WHERE stock_quantity = 0 AND status = 'active'"),
-];
-$sales_total = (float)$pdo->query("SELECT COALESCE(SUM(amount),0) FROM payment WHERE payment_status = 'paid'")->fetchColumn();
-$sales_month = (float)$pdo->query("SELECT COALESCE(SUM(amount),0) FROM payment WHERE payment_status = 'paid'
-                                   AND YEAR(payment_date) = YEAR(CURDATE()) AND MONTH(payment_date) = MONTH(CURDATE())")->fetchColumn();
-$receivables = 0;                                   // money still owed by customers (not cancelled orders)
-foreach (fetch_orders("AND o.status <> 'cancelled'") as $o) { $receivables += $o['balance']; }
+require_once __DIR__ . '/../includes/reports.php';   // dashboard_summary() + item_performance(): also used by the Sales Report download
+
+[$stats, $sales_total, $sales_month, $receivables] = dashboard_summary();
 
 // ---------- Delete an order (full admins only) ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -32,36 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 $recent = array_slice(fetch_orders(), 0, 8);
 
-// ---------- Item performance: units sold per product (cancelled orders excluded) ----------
-$perf_rows = $pdo->query("SELECT e.equipment_id, e.name,
-                                 COALESCE(SUM(CASE WHEN o.status <> 'cancelled' THEN oi.quantity END), 0) AS units_sold,
-                                 COALESCE(SUM(CASE WHEN o.status <> 'cancelled' THEN oi.subtotal END), 0) AS revenue
-                          FROM equipment e
-                          LEFT JOIN order_item oi ON oi.equipment_id = e.equipment_id
-                          LEFT JOIN orders o      ON o.order_id = oi.order_id
-                          WHERE e.status <> 'discontinued'
-                          GROUP BY e.equipment_id, e.name
-                          ORDER BY units_sold DESC, revenue DESC, e.name")->fetchAll();
-
-// Products that actually sold something are split into thirds (best first):
-// top third = High Performing, middle third = Moderate Performing, rest = Low Performing.
-// Products with no sales at all always count as Low Performing.
-$sellers = $no_sales = [];
-foreach ($perf_rows as $row) { if ($row['units_sold'] > 0) $sellers[] = $row; else $no_sales[] = $row; }
-$hi_end  = (int)ceil(count($sellers) / 3);
-$mid_end = (int)ceil(count($sellers) * 2 / 3);
-$perf = ['high' => [], 'moderate' => [], 'low' => []];
-foreach ($sellers as $i => $row) {
-    if ($i < $hi_end)      $perf['high'][]     = $row;
-    elseif ($i < $mid_end) $perf['moderate'][] = $row;
-    else                   $perf['low'][]      = $row;
-}
-$perf['low'] = array_merge($perf['low'], $no_sales);
+// ---------- Item performance: units sold per product (cancelled orders excluded), High / Moderate / Low ----------
+$perf = item_performance();
 
 $page_title = 'Dashboard';
 require __DIR__ . '/_header.php';
 ?>
-<h1>Dashboard</h1>
+<div class="page-head"><h1>Dashboard</h1><?= export_buttons('sales') ?></div>
 <div class="stats">
   <?php foreach ($stats as $label => $n): ?><div class="stat"><b><?= $n ?></b><span><?= e($label) ?></span></div><?php endforeach; ?>
   <div class="stat"><b><?= peso($sales_total) ?></b><span>Total sales (verified)</span></div>

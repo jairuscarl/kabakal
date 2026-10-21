@@ -21,7 +21,8 @@ $payments = $st->fetchAll();
 $pending_amt = 0;
 foreach ($payments as $p) { if ($p['payment_status'] === 'pending') $pending_amt += $p['amount']; }
 $to_send = max(0, round($order['total_amount'] - $order['paid_amount'] - $pending_amt, 2));
-$can_pay = $order['status'] !== 'cancelled' && $to_send > 0;
+$is_cod  = $order['payment_method'] === 'cod';
+$can_pay = $order['status'] !== 'cancelled' && $to_send > 0 && !$is_cod;   // COD is paid in cash to the rider
 
 // ---- Cancel order: only while still pending and no money has been sent or verified ----
 $has_payment = false;
@@ -86,7 +87,8 @@ require __DIR__ . '/includes/header.php';
       <?php endforeach; ?>
       <tr><td colspan="3" class="right"><b>Total</b></td><td><b><?= peso($order['total_amount']) ?></b></td></tr>
     </table></div>
-    <p class="muted">Delivery address: <?= e($order['shipping_address']) ?></p>
+    <p class="muted">Delivery address: <?= e($order['shipping_address']) ?><br>
+      Payment method: <?= $is_cod ? 'Cash on Delivery' : 'GCash' ?></p>
 
     <h2>Payments</h2>
     <?php if (!$payments): ?><p class="muted">No payment sent yet.</p><?php else: ?>
@@ -131,6 +133,13 @@ require __DIR__ . '/includes/header.php';
       <div class="summary"><h3>Order cancelled</h3><p class="muted">This order was cancelled<?= $order['cancelled_at'] ? ' on ' . e(date('M j, Y', strtotime($order['cancelled_at']))) : '' ?>.<?php if ($order['cancel_reason']): ?><br>Reason: <?= e($order['cancel_reason']) ?><?php endif; ?></p></div>
     <?php elseif ($order['pay_state'] === 'Paid'): ?>
       <div class="summary"><h3>Fully paid</h3><p class="muted">Thank you! Your payment is verified.</p></div>
+    <?php elseif ($is_cod): ?>
+      <div class="gcash-box">
+        <h3>Cash on Delivery</h3>
+        <p>Please prepare</p>
+        <div class="amount"><?= peso($order['balance']) ?></div>
+        <p class="help">Pay the rider in cash when your order arrives.</p>
+      </div>
     <?php else: ?>
       <div class="summary"><h3>Waiting for verification</h3><p class="muted">Your receipt is being checked by the shop.</p></div>
     <?php endif; ?>

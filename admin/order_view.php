@@ -81,7 +81,11 @@ require __DIR__ . '/_header.php';
     <div class="summary">
       <h3>Summary</h3>
       <div class="row"><span>Order status</span><span><?= badge($order['status']) ?></span></div>
+      <div class="row"><span>Payment method</span><span><?= $order['payment_method'] === 'cod' ? 'Cash on Delivery' : 'GCash' ?></span></div>
       <div class="row"><span>Payment</span><span><?= badge($order['pay_state']) ?></span></div>
+      <?php if ($order['payment_method'] === 'cod' && !in_array($order['status'], ['delivered', 'cancelled'], true)): ?>
+        <p class="help">Cash on Delivery: setting the status to "delivered" records the cash payment automatically.</p>
+      <?php endif; ?>
       <div class="row"><span>Total</span><span><?= peso($order['total_amount']) ?></span></div>
       <div class="row"><span>Verified payments</span><span><?= peso($order['paid_amount']) ?></span></div>
       <div class="row total"><span>Balance</span><span><?= $order['status'] === 'cancelled' ? '-' : peso($order['balance']) ?></span></div>

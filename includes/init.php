@@ -40,6 +40,14 @@ try {
     }
 } catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
 
+// How the customer pays an order: GCash (upload receipt) or Cash on Delivery
+try {
+    $has_method = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS
+                               WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'
+                                 AND COLUMN_NAME = 'payment_method'")->fetchColumn();
+    if (!$has_method) $pdo->exec("ALTER TABLE orders ADD COLUMN payment_method ENUM('gcash','cod') NOT NULL DEFAULT 'gcash' AFTER total_amount");
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
 // Customer profile picture
 try {
     $has_avatar = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS
@@ -178,7 +186,10 @@ function is_admin_logged_in() { return isset($_SESSION['admin_id']); }
 function require_login() {
     if (!is_logged_in()) {
         flash('info', 'Please log in to continue.');
-        redirect('login.php?next=' . urlencode(basename($_SERVER['SCRIPT_NAME'])));
+        $next = basename($_SERVER['SCRIPT_NAME']);
+        // keep a simple "?name=number" so the customer comes back to the same page (e.g. checkout.php?buy_now=1)
+        if (preg_match('/^[a-z_]+=\d+$/', $_SERVER['QUERY_STRING'] ?? '')) $next .= '?' . $_SERVER['QUERY_STRING'];
+        redirect('login.php?next=' . urlencode($next));
     }
 }
 
@@ -284,6 +295,43 @@ function avatar_html($path, $name, $size = 36) {
     return '<span class="avatar avatar-letter" aria-hidden="true" style="' . $style . '">' . e($letter) . '</span>';
 }
 
+/** The shopping-cart icon (same drawing as the cart in the navbar). */
+function icon_cart($size = 22) {
+    return '<svg viewBox="0 0 24 24" width="' . (int)$size . '" height="' . (int)$size . '" fill="none" stroke="currentColor" stroke-width="2" '
+         . 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="21" r="1"/>'
+         . '<circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+}
+
+/** Admin light/dark mode: put in <head> so the saved choice is applied before the page is drawn (no white flash).
+ *  Saved choice wins; with none saved, the computer's own light/dark setting is used. */
+function admin_theme_script() {
+    return "<script>(function(){var t=null;try{t=localStorage.getItem('admin-theme');}catch(e){}"
+         . "if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';"
+         . "if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();</script>";
+}
+
+/** Icon-only light/dark mode button (click handled in assets/js/main.js). */
+function theme_toggle_button($extra_class = '') {
+    return '<button type="button" class="theme-toggle' . ($extra_class ? ' ' . e($extra_class) : '') . '" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode">'
+         . '<svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+         . '<svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/>'
+         . '<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></button>';
+}
+
+/** "Add to cart" (cart icon) + "Buy now" buttons for one product. $qty_field adds a quantity box (product page). */
+function buy_buttons($p, $qty_field = false) {
+    $html = '<form method="post" action="' . e(url('cart.php')) . '" class="buy-row' . ($qty_field ? '' : ' buy-row-sm') . '">'
+          . csrf_field() . '<input type="hidden" name="equipment_id" value="' . (int)$p['equipment_id'] . '">';
+    if ($qty_field) {
+        $html .= '<div><label for="qty">Quantity</label><input type="number" id="qty" name="quantity" value="1" min="1" max="'
+               . (int)$p['stock_quantity'] . '"></div>';
+    }
+    return $html
+         . '<button class="btn btn-outline btn-icon" type="submit" name="action" value="add" title="Add to cart" aria-label="Add to cart">'
+         . icon_cart($qty_field ? 24 : 20) . '</button>'
+         . '<button class="btn' . ($qty_field ? '' : ' btn-sm') . ' btn-buy" type="submit" name="action" value="buy_now">Buy now</button></form>';
+}
+
 /** Product image URL, or a placeholder when none. */
 function product_image($path) { return url($path ?: 'assets/images/placeholder.svg'); }
 
@@ -383,10 +431,11 @@ function cart_clear() {
     else { unset($_SESSION['cart']); }
 }
 
-/** Cart lines with product info: name, price, image_url, stock_quantity, quantity. */
-function cart_items() {
+/** Cart lines with product info: name, price, image_url, stock_quantity, quantity.
+ *  $map = [equipment_id => quantity] to use instead of the cart (the "Buy now" item). */
+function cart_items($map = null) {
     global $pdo;
-    $map = cart_map();
+    $map = $map ?? cart_map();
     if (!$map) return [];
     $marks = implode(',', array_fill(0, count($map), '?'));
     $st = $pdo->prepare("SELECT equipment_id, name, price, image_url, stock_quantity FROM equipment
@@ -466,6 +515,18 @@ function set_order_status($order_id, $new, $admin_id = null) {
             foreach ($items->fetchAll() as $it) { inventory_move($it['equipment_id'], $from, $to, $it['quantity'], $admin_id); }
         }
         $pdo->prepare('UPDATE orders SET status = ? WHERE order_id = ?')->execute([$new, $order_id]);
+        // Cash on Delivery: the rider collected the money, so a delivered COD order is recorded as paid in cash
+        if ($new === 'delivered') {
+            $st = $pdo->prepare("SELECT o.payment_method, o.total_amount - COALESCE((SELECT SUM(p.amount) FROM payment p
+                                        WHERE p.order_id = o.order_id AND p.payment_status = 'paid'), 0) AS due
+                                 FROM orders o WHERE o.order_id = ?");
+            $st->execute([$order_id]);
+            $o = $st->fetch();
+            if ($o['payment_method'] === 'cod' && $o['due'] > 0) {
+                $pdo->prepare("INSERT INTO payment (order_id, verified_by, payment_method, amount, payment_status, payment_date, remarks)
+                               VALUES (?, ?, 'cash', ?, 'paid', CURDATE(), 'Cash on delivery')")->execute([$order_id, $admin_id, $o['due']]);
+            }
+        }
         if ($new === 'shipped') {
             $pdo->prepare('UPDATE orders SET shipping_date = COALESCE(shipping_date, CURDATE()) WHERE order_id = ?')->execute([$order_id]);
         }

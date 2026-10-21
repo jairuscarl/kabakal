@@ -23,11 +23,14 @@ if ($_SESSION['admin_role'] === 'admin') $menu['settings.php'] = 'Settings';
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="<?= url('assets/images/favicon.png') ?>">
   <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
+  <link rel="stylesheet" href="<?= url('assets/css/admin.css') ?>">
+  <?= admin_theme_script() ?>
 </head>
-<body>
+<body class="admin-theme admin-layout">
 <header class="admin-bar">
   <div class="container nav">
     <a class="brand brand-logo" href="<?= url('admin/index.php') ?>"><img src="<?= url('assets/images/logo.png') ?>" alt="Kabakal Fitness Equipment" width="720" height="229"><span class="admin-tag">ADMIN</span></a>
+    <?= theme_toggle_button() ?>
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">&#9776;</button>
     <nav class="admin-nav">
       <?php foreach ($menu as $file => $label): ?>
@@ -35,7 +38,7 @@ if ($_SESSION['admin_role'] === 'admin') $menu['settings.php'] = 'Settings';
           <?php if ($file === 'payments.php' && $pending_proofs): ?><span class="cart-badge"><?= $pending_proofs ?></span><?php endif; ?>
           <?php if ($file === 'messages.php' && $unread_msgs): ?><span class="cart-badge"><?= $unread_msgs ?></span><?php endif; ?></a>
       <?php endforeach; ?>
-      <a href="<?= url('index.php') ?>" target="_blank">View site</a>
+      <a href="<?= url('index.php') ?>" target="_blank" class="admin-nav-bottom">View site</a>
       <a href="<?= url('admin/logout.php') ?>" class="btn btn-sm btn-danger-solid">Logout (<?= e($admin_short) ?>)</a>
     </nav>
   </div>

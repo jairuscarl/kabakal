@@ -68,14 +68,7 @@ require __DIR__ . '/includes/header.php';
     <p><?= nl2br(e($p['description'] ?: 'Contact the shop for more details about this item.')) ?></p>
 
     <?php if ($p['stock_quantity'] > 0): ?>
-      <form method="post" action="<?= url('cart.php') ?>" class="buy-row">
-        <?= csrf_field() ?>
-        <input type="hidden" name="action" value="add">
-        <input type="hidden" name="equipment_id" value="<?= (int)$p['equipment_id'] ?>">
-        <div><label for="qty">Quantity</label>
-          <input type="number" id="qty" name="quantity" value="1" min="1" max="<?= (int)$p['stock_quantity'] ?>"></div>
-        <button class="btn" type="submit">Add to cart</button>
-      </form>
+      <?= buy_buttons($p, true) ?>
     <?php else: ?>
       <p class="muted">This item is currently out of stock.</p>
     <?php endif; ?>

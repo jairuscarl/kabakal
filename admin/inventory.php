@@ -29,32 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $view = $_GET['view'] ?? ''; $q = trim($_GET['q'] ?? '');
-$sql = "SELECT e.equipment_id, e.name, c.name AS category_name, e.stock_quantity AS available, e.last_restocked_at,
-          COALESCE(SUM(CASE WHEN i.status = 'reserved' THEN i.quantity END), 0) AS reserved,
-          COALESCE(SUM(CASE WHEN i.status = 'sold'     THEN i.quantity END), 0) AS sold,
-          COALESCE(SUM(CASE WHEN i.status = 'damaged'  THEN i.quantity END), 0) AS damaged
-        FROM equipment e JOIN category c ON c.category_id = e.category_id
-        LEFT JOIN inventory i ON i.equipment_id = e.equipment_id
-        WHERE e.status <> 'discontinued'";
-$params = [];
-if ($q !== '') { $sql .= ' AND e.name LIKE ?'; $params[] = "%$q%"; }
-$sql .= ' GROUP BY e.equipment_id, e.name, c.name, e.stock_quantity, e.last_restocked_at';
-$having = ['available' => 'available > 0', 'reserved' => 'reserved > 0', 'sold' => 'sold > 0', 'damaged' => 'damaged > 0', 'out_of_stock' => 'available = 0'];
-if (isset($having[$view])) $sql .= ' HAVING ' . $having[$view];
-
-// The two "Sort by stock" choices in the filter dropdown order the list instead of filtering it.
-$stock_order = [
-    'stock_low_high' => 'available ASC,  c.name, e.name',   // low stock to high stock
-    'stock_high_low' => 'available DESC, c.name, e.name',   // high stock to low stock
-];
-$st = $pdo->prepare($sql . ' ORDER BY ' . ($stock_order[$view] ?? 'c.name, e.name'));
-$st->execute($params);
-$rows = $st->fetchAll();
+require_once __DIR__ . '/../includes/reports.php';   // inventory_report_rows(): same list the Excel/PDF/CSV download uses
+$rows = inventory_report_rows($q, $view);
 
 $page_title = 'Inventory';
 require __DIR__ . '/_header.php';
 ?>
-<h1>Inventory</h1>
+<div class="page-head"><h1>Inventory</h1><?= export_buttons('inventory', report_filters($_GET)) ?></div>
 <form class="filter-bar" method="get">
   <input type="search" name="q" value="<?= e($q) ?>" placeholder="Search product...">
   <select name="view">

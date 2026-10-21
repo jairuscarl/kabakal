@@ -1,0 +1,2 @@
+# Composer libraries are only loaded by PHP (admin/export.php); never serve them to browsers.
+Require all denied
