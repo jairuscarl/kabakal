@@ -30,14 +30,19 @@ require __DIR__ . '/includes/header.php';
       <div class="gallery-track">
         <?php foreach ($slides as $i => $s): ?>
         <div class="gallery-slide" aria-hidden="<?= $i ? 'true' : 'false' ?>">
-          <?php if ($s['media_type'] === 'video'): ?>
-            <video src="<?= e($s['src']) ?>" controls playsinline preload="metadata"></video>
+          <?php if ($s['media_type'] === 'video'): /* controls are switched on in fullscreen (assets/js/main.js) */ ?>
+            <video src="<?= e($s['src']) ?>#t=0.1" playsinline preload="metadata"></video>
+            <button type="button" class="gallery-play" data-fullscreen aria-label="Play video in fullscreen">&#9654;</button>
           <?php else: ?>
-            <img src="<?= e($s['src']) ?>" alt="<?= e($p['name']) ?> — photo <?= $i + 1 ?>">
+            <img src="<?= e($s['src']) ?>" alt="<?= e($p['name']) ?> — photo <?= $i + 1 ?>" data-fullscreen>
           <?php endif; ?>
         </div>
         <?php endforeach; ?>
       </div>
+      <button type="button" class="gallery-expand" data-fullscreen aria-label="View fullscreen" title="View fullscreen">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+      <button type="button" class="gallery-close" aria-label="Close fullscreen" title="Close (Esc)">&times;</button>
       <?php if (count($slides) > 1): ?>
         <button type="button" class="gallery-nav gallery-prev" aria-label="Previous">&#10094;</button>
         <button type="button" class="gallery-nav gallery-next" aria-label="Next">&#10095;</button>

@@ -323,10 +323,11 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
   /* Hero copy: drop the desktop indent/shift so the headline stays inside the screen on phones.
      margin-left goes back to auto so .container keeps centring the box with its side gutter. */
   .hero-content { margin-left: auto; top: -30px; }
-  /* Customer header on small screens: logo left, hamburger then cart icon on the right,
-     and the menu drops onto its own full-width row once it is opened. */
+  /* Customer header on small screens: logo left, then the cart / mail / profile icons, and the
+     hamburger on the very right edge; the menu drops onto its own full-width row once it is opened. */
   .site-header .nav { grid-template-columns: 1fr auto auto; }
-  .site-header .nav-toggle { grid-area: 1 / 2; }
+  .site-header .nav-icons { grid-area: 1 / 2; }
+  .site-header .nav-toggle { grid-area: 1 / 3; justify-self: end; }
   .site-header .nav-links { grid-row: 2; grid-column: 1 / -1; gap: 12px; } .nav-right { display: contents; } .site-header .nav-welcome { grid-row: 3; grid-column: 1 / -1; justify-self: end; padding: 0 0 10px; font-size: .9rem; }
 }
 @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .card-body { padding: 10px; } .price { font-size: 1.15rem; } }
@@ -527,3 +528,82 @@ tr.row-unread td { background: var(--panel-2); }
 /* ---- Admin report downloads (Excel / PDF / CSV buttons) ---- */
 .export-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .export-bar .muted { font-size: .9rem; }
+
+/* ---- Customer header: icon in front of each menu link, one space apart ---- */
+.nav-links a { display: inline-flex; align-items: center; gap: .3em; }
+.nav-links .nav-icon { display: block; flex: 0 0 auto; }
+.nav-links a.btn .nav-icon { width: 16px; height: 16px; }
+
+/* ---- Product gallery: click a photo / video to view it fullscreen (assets/js/main.js) ---- */
+.gallery-slide { position: relative; }
+.gallery-slide img[data-fullscreen] { cursor: zoom-in; }
+.gallery-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 68px; height: 68px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.85); background: rgba(0,0,0,.55); color: #fff; font-size: 1.6rem; padding-left: 6px; cursor: pointer; }
+.gallery-play:hover { background: var(--orange); border-color: var(--orange); color: #000; }
+.gallery-expand, .gallery-close { position: absolute; z-index: 3; display: grid; place-items: center; border: 0; cursor: pointer;
+  background: rgba(0,0,0,.6); color: #fff; border-radius: 8px; }
+.gallery-expand { bottom: 10px; right: 10px; width: 38px; height: 38px; }
+.gallery-expand:hover, .gallery-close:hover { background: var(--orange); color: #000; }
+.gallery-expand svg { display: block; }
+.gallery-close { display: none; top: 14px; right: 14px; width: 44px; height: 44px; font-size: 2rem; line-height: 1; }
+/* Fullscreen view: the stage covers the screen, each photo / video fits inside it */
+.gallery-stage.is-fullscreen { position: fixed; inset: 0; z-index: 300; border: 0; border-radius: 0; background: #000; }
+.gallery-stage.is-fullscreen .gallery-track { height: 100%; }
+.gallery-stage.is-fullscreen .gallery-slide { aspect-ratio: auto; height: 100%; }
+.gallery-stage.is-fullscreen .gallery-slide img, .gallery-stage.is-fullscreen .gallery-slide video { background: #000; cursor: default; }
+.gallery-stage.is-fullscreen .gallery-play, .gallery-stage.is-fullscreen .gallery-expand { display: none; }
+.gallery-stage.is-fullscreen .gallery-close { display: grid; }
+.gallery-stage.is-fullscreen .gallery-count { top: 22px; right: auto; left: 18px; }
+.gallery-stage.is-fullscreen .gallery-nav { width: 52px; height: 52px; }
+
+/* ---- Messages list: the whole conversation box is clickable ----
+   The subject link stretches an invisible layer over the entire <li> (position:absolute on ::after),
+   so a click anywhere in the box opens the conversation while it stays one normal link. */
+.conv-item { position: relative; cursor: pointer; transition: background-color .15s ease; }
+.conv-item:hover { background: var(--panel-2); }
+.conv-item:hover .conv-open { color: var(--orange); }
+.conv-item a, .conv-item a:hover { text-decoration: none; }   /* the whole box is the link: no underline on hover */
+.conv-open::after { content: ""; position: absolute; inset: 0; }
+.conv-open:focus-visible { outline: none; }
+.conv-item:has(.conv-open:focus-visible) { outline: 3px solid var(--orange); outline-offset: -3px; }
+
+/* Inbox order cards: the "View order" link stays clickable above the stretched card link */
+.conv-inner { position: relative; z-index: 1; }
+
+/* ---- Footer: icon in front of each contact / shop line ---- */
+.footer-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 10px; }
+.footer-list li { display: flex; align-items: flex-start; gap: .5em; color: var(--muted); overflow-wrap: anywhere; }
+.footer-list .footer-icon { flex: 0 0 auto; display: block; margin-top: 3px; color: var(--orange); }
+/* Text only for screen readers (e.g. "Telephone:" in front of the number) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---- Footer: compact sizing (smaller logo, text and spacing) ---- */
+.site-footer { margin-top: 32px; }
+.footer-grid { gap: 20px 32px; padding: 22px 0 6px; }
+.footer-logo { width: 140px; margin-bottom: 8px; }
+.site-footer p { font-size: .88rem; line-height: 1.5; }
+.site-footer h3 { font-size: .95rem; margin-bottom: 10px; }
+.footer-list { gap: 6px; }
+.footer-list li { font-size: .88rem; line-height: 1.4; }
+.footer-list .footer-icon { width: 15px; height: 15px; margin-top: 2px; }
+.copy { padding: 10px 16px; font-size: .8rem; }
+/* Facebook / Instagram as small round icon buttons under the shop description */
+.footer-social { display: flex; gap: 8px; }
+.footer-social a { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); color: var(--orange); }
+.footer-social a:hover { background: var(--orange); border-color: var(--orange); color: #000; text-decoration: none; }
+.footer-social .footer-icon { width: 15px; height: 15px; margin: 0; }
+
+/* ---- Receipt page (receipt.php, admin/receipt.php): the slip's own look is in includes/receipt.php ---- */
+.receipt-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0 0 18px; }
+.receipt-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
+.receipt-actions svg { display: block; }
+.receipt-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
+.receipt-wrap .receipt-slip { box-shadow: 0 6px 24px rgba(0, 0, 0, .35); border-radius: 2px; }
+/* Print: only the slip, at its real 80mm size */
+@media print {
+  @page { size: 80mm auto; margin: 0; }
+  body { background: #fff !important; padding: 0 !important; }
+  body * { visibility: hidden; }
+  .receipt-slip, .receipt-slip * { visibility: visible; }
+  .receipt-slip { position: absolute; left: 0; top: 0; box-shadow: none !important; }
+}

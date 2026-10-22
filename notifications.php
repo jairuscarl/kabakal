@@ -48,9 +48,9 @@ require __DIR__ . '/includes/header.php';
   <div class="track-list">
     <?php foreach ($orders as $o):
         $at = array_search($o['status'], array_keys($steps), true); ?>
-    <div class="track-card">
+    <div class="track-card conv-item">
       <div class="track-head">
-        <a href="<?= url('order_confirm.php?id=' . (int)$o['order_id']) ?>"><strong>Order #<?= (int)$o['order_id'] ?></strong></a>
+        <a class="conv-open" href="<?= url('order_confirm.php?id=' . (int)$o['order_id']) ?>"><strong>Order #<?= (int)$o['order_id'] ?></strong></a>
         <span class="muted"><?= e(date('M j, Y', strtotime($o['order_date']))) ?> · <?= peso($o['total_amount']) ?></span>
       </div>
       <p class="muted track-items"><?= e(implode(', ', $names[$o['order_id']] ?? [])) ?></p>
@@ -61,7 +61,7 @@ require __DIR__ . '/includes/header.php';
       </ol>
       <?php if ($o['status'] === 'pending'): ?>
         <p class="help"><?= $o['pay_state'] === 'Pending Verification' ? 'We are checking your payment.' : 'Waiting for your payment.' ?>
-          <a href="<?= url('order_confirm.php?id=' . (int)$o['order_id']) ?>">View order</a></p>
+          <a class="conv-inner" href="<?= url('order_confirm.php?id=' . (int)$o['order_id']) ?>">View order</a></p>
       <?php endif; ?>
     </div>
     <?php endforeach; ?>
@@ -74,11 +74,11 @@ require __DIR__ . '/includes/header.php';
 <?php else: ?>
   <ul class="inbox-list">
     <?php foreach ($messages as $m): ?>
-    <li class="<?= $m['is_read'] ? '' : 'unread' ?>">
+    <li class="<?= $m['order_id'] ? 'conv-item' : '' ?><?= $m['is_read'] ? '' : ' unread' ?>">
       <div>
         <?php if (!$m['is_read']): ?><span class="inbox-new">New</span><?php endif; ?>
         <?php if ($m['order_id']): ?>
-          <a href="<?= url('order_confirm.php?id=' . (int)$m['order_id']) ?>"><?= e($m['message']) ?></a>
+          <a class="conv-open" href="<?= url('order_confirm.php?id=' . (int)$m['order_id']) ?>"><?= e($m['message']) ?></a>
         <?php else: ?>
           <?= e($m['message']) ?>
         <?php endif; ?>

@@ -89,13 +89,15 @@ document.querySelectorAll('.pw-toggle').forEach(function (btn) {
 
 // Product gallery slider (product.php): prev/next buttons, thumbnails, arrow keys
 // and swipe. A playing video is paused when you slide away from it.
+// Fullscreen: clicking a photo, a video's play button or the expand icon shows the whole
+// gallery fullscreen (arrows, swipe and keys still work); Esc or the X closes it.
 document.querySelectorAll('[data-gallery]').forEach(function (g) {
+  var stage = g.querySelector('.gallery-stage');
   var track = g.querySelector('.gallery-track');
   var slides = g.querySelectorAll('.gallery-slide');
   var thumbs = g.querySelectorAll('.gallery-thumb');
   var count = g.querySelector('.gallery-count');
   var cur = 0;
-  if (slides.length < 2) return;
 
   function show(i) {
     cur = (i + slides.length) % slides.length;               // wrap around both ends
@@ -110,13 +112,61 @@ document.querySelectorAll('[data-gallery]').forEach(function (g) {
     if (count) count.textContent = (cur + 1) + ' / ' + slides.length;
   }
 
+  // ---- Fullscreen ----
+  // Uses the browser's real fullscreen when it has one; otherwise (e.g. iPhone) the stage is
+  // simply stretched over the whole window with CSS (.is-fullscreen).
+  function isOpen() { return stage.classList.contains('is-fullscreen'); }
+  function setOpen(open) {
+    stage.classList.toggle('is-fullscreen', open);
+    document.body.classList.toggle('lightbox-open', open);  // stops the page scrolling behind it
+    slides.forEach(function (s) {
+      var v = s.querySelector('video');
+      if (v) { v.controls = open; if (!open) v.pause(); }
+    });
+  }
+  function enter(playVideo) {
+    if (!isOpen()) {
+      setOpen(true);
+      var req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+      if (req) { try { var p = req.call(stage); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    }
+    var v = slides[cur] && slides[cur].querySelector('video');
+    if (playVideo && v) { var pl = v.play(); if (pl && pl.catch) pl.catch(function () {}); }
+    stage.focus();
+  }
+  function exit() {
+    if (!isOpen()) return;
+    var fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fsEl) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    setOpen(false);
+  }
+  stage.tabIndex = -1;
+  stage.querySelectorAll('[data-fullscreen]').forEach(function (el) {
+    el.addEventListener('click', function () { enter(el.classList.contains('gallery-play')); });
+  });
+  stage.querySelector('.gallery-close').addEventListener('click', exit);
+  // Leaving the browser's fullscreen another way (Esc key, phone back gesture) closes it here too
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (evt) {
+    document.addEventListener(evt, function () {
+      if (!(document.fullscreenElement || document.webkitFullscreenElement) && isOpen()) setOpen(false);
+    });
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (!isOpen()) return;
+    if (ev.key === 'Escape') exit();
+    else if (ev.target.tagName !== 'VIDEO' && ev.key === 'ArrowLeft') show(cur - 1);
+    else if (ev.target.tagName !== 'VIDEO' && ev.key === 'ArrowRight') show(cur + 1);
+  });
+
+  if (slides.length < 2) return;
+
   g.querySelector('.gallery-prev').addEventListener('click', function () { show(cur - 1); });
   g.querySelector('.gallery-next').addEventListener('click', function () { show(cur + 1); });
   thumbs.forEach(function (t, n) { t.addEventListener('click', function () { show(n); }); });
 
   g.tabIndex = 0;
   g.addEventListener('keydown', function (ev) {
-    if (ev.target.tagName === 'VIDEO') return;               // let the video use its own arrow keys
+    if (isOpen() || ev.target.tagName === 'VIDEO') return;   // fullscreen keys are handled above
     if (ev.key === 'ArrowLeft') show(cur - 1);
     if (ev.key === 'ArrowRight') show(cur + 1);
   });
@@ -181,4 +231,29 @@ document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
     try { localStorage.setItem('admin-theme', dark ? 'dark' : 'light'); } catch (e) {}
     label();
   });
+});
+
+// Receipt page (includes/receipt.php): "Download PNG" turns the receipt slip into a picture in the
+// browser (html2canvas, saved in assets/js), "Print" prints only the slip (see @media print in style.css).
+document.querySelectorAll('[data-receipt-png]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var slip = document.getElementById('receipt-slip');
+    if (!slip || !window.html2canvas) { alert('Sorry, the picture could not be made. Please use Download PDF.'); return; }
+    btn.disabled = true;
+    window.html2canvas(slip, {
+      scale: 3, backgroundColor: '#ffffff', useCORS: true,
+      // html2canvas draws boxed monospace text a few px lower than the browser: lift "PAID" in its copy only
+      onclone: function (doc) { var paid = doc.querySelector('.r-paid'); if (paid) paid.style.lineHeight = '12px'; }
+    }).then(function (canvas) {
+      var a = document.createElement('a');
+      a.download = btn.getAttribute('data-receipt-png');
+      a.href = canvas.toDataURL('image/png');
+      document.body.appendChild(a); a.click(); a.remove();
+    }).catch(function () {
+      alert('Sorry, the picture could not be made. Please use Download PDF.');
+    }).then(function () { btn.disabled = false; });
+  });
+});
+document.querySelectorAll('[data-print]').forEach(function (btn) {
+  btn.addEventListener('click', function () { window.print(); });
 });

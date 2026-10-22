@@ -97,10 +97,10 @@ require __DIR__ . '/includes/header.php';
     <?php else: ?>
       <ul class="inbox-list">
         <?php foreach ($convs as $c): ?>
-        <li class="<?= $c['customer_unread'] ? 'unread' : '' ?>">
+        <li class="conv-item<?= $c['customer_unread'] ? ' unread' : '' ?>">
           <div class="conv-line">
             <?php if ($c['customer_unread']): ?><span class="inbox-new">New reply</span><?php endif; ?>
-            <a href="<?= url('messages.php?id=' . (int)$c['conversation_id']) ?>"><strong><?= e($c['subject']) ?></strong></a>
+            <a class="conv-open" href="<?= url('messages.php?id=' . (int)$c['conversation_id']) ?>"><strong><?= e($c['subject']) ?></strong></a>
             <div class="muted conv-preview"><?= e(conversation_topic($c)) ?> · <?= e(mb_strimwidth((string)$c['last_body'], 0, 90, '…')) ?></div>
           </div>
           <time class="muted"><?= e(date('M j, g:i A', strtotime($c['last_message_at']))) ?></time>

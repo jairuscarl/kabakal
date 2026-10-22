@@ -132,7 +132,8 @@ require __DIR__ . '/includes/header.php';
     <?php elseif ($order['status'] === 'cancelled'): ?>
       <div class="summary"><h3>Order cancelled</h3><p class="muted">This order was cancelled<?= $order['cancelled_at'] ? ' on ' . e(date('M j, Y', strtotime($order['cancelled_at']))) : '' ?>.<?php if ($order['cancel_reason']): ?><br>Reason: <?= e($order['cancel_reason']) ?><?php endif; ?></p></div>
     <?php elseif ($order['pay_state'] === 'Paid'): ?>
-      <div class="summary"><h3>Fully paid</h3><p class="muted">Thank you! Your payment is verified.</p></div>
+      <div class="summary"><h3>Fully paid</h3><p class="muted">Thank you! Your payment is verified.</p>
+        <a class="btn btn-block" href="<?= url('receipt.php?id=' . $order_id) ?>">View receipt</a></div>
     <?php elseif ($is_cod): ?>
       <div class="gcash-box">
         <h3>Cash on Delivery</h3>

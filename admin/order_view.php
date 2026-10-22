@@ -82,6 +82,9 @@ require __DIR__ . '/_header.php';
       <h3>Summary</h3>
       <div class="row"><span>Order status</span><span><?= badge($order['status']) ?></span></div>
       <div class="row"><span>Payment method</span><span><?= $order['payment_method'] === 'cod' ? 'Cash on Delivery' : 'GCash' ?></span></div>
+      <?php if ($order['pay_state'] === 'Paid' && $order['status'] !== 'cancelled'): ?>
+        <a class="btn btn-sm btn-outline btn-block" style="margin:6px 0" href="<?= url('admin/receipt.php?id=' . $order_id) ?>">View receipt</a>
+      <?php endif; ?>
       <div class="row"><span>Payment</span><span><?= badge($order['pay_state']) ?></span></div>
       <?php if ($order['payment_method'] === 'cod' && !in_array($order['status'], ['delivered', 'cancelled'], true)): ?>
         <p class="help">Cash on Delivery: setting the status to "delivered" records the cash payment automatically.</p>

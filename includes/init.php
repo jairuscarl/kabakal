@@ -557,7 +557,7 @@ function order_status_message($order_id, $status) {
     $n = '#' . (int)$order_id;
     return [
         'pending'   => "Order $n was moved back to pending.",
-        'paid'      => "Order $n is fully paid and confirmed. We are preparing your items.",
+        'paid'      => "Order $n is fully paid and confirmed. We are preparing your items. Your receipt is ready on the order page.",
         'shipped'   => "Order $n has been shipped and is on its way!",
         'delivered' => "Order $n was delivered. Enjoy your equipment, and leave us a review!",
         'cancelled' => "Order $n was cancelled by the shop.",

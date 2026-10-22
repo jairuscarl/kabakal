@@ -109,7 +109,8 @@ require __DIR__ . '/includes/header.php';
           <td><?= $o['status'] === 'cancelled' ? '-' : peso($o['balance']) ?></td>
           <td><?= badge($o['status']) ?></td>
           <td><?= badge($o['pay_state']) ?></td>
-          <td><a class="btn btn-sm btn-outline" href="<?= url('order_confirm.php?id=' . (int)$o['order_id']) ?>"><?= $o['balance'] > 0 && $o['status'] !== 'cancelled' ? 'Pay / View' : 'View' ?></a></td>
+          <td><a class="btn btn-sm btn-outline" href="<?= url('order_confirm.php?id=' . (int)$o['order_id']) ?>"><?= $o['balance'] > 0 && $o['status'] !== 'cancelled' ? 'Pay / View' : 'View' ?></a>
+            <?php if ($o['pay_state'] === 'Paid' && $o['status'] !== 'cancelled'): ?><a class="btn btn-sm btn-outline" href="<?= url('receipt.php?id=' . (int)$o['order_id']) ?>">Receipt</a><?php endif; ?></td>
         </tr>
       <?php endforeach; ?>
     </table></div>
