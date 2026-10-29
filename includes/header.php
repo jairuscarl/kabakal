@@ -4,9 +4,12 @@ $shop_name = setting('shop_name', 'Kabakal Fitness Equipment');
 $cart_total = cart_count();
 $unread = unread_count();
 $me_avatar = null;
+$site_theme = 'dark';   // guests always get the dark shop; customers pick in My Account > Preferences
 if (is_logged_in()) {
-    $st = $pdo->prepare('SELECT avatar_url FROM customer WHERE customer_id = ?'); $st->execute([$_SESSION['customer_id']]);
-    $me_avatar = $st->fetchColumn() ?: null;
+    $st = $pdo->prepare('SELECT avatar_url, theme FROM customer WHERE customer_id = ?'); $st->execute([$_SESSION['customer_id']]);
+    $me_row = $st->fetch() ?: [];
+    $me_avatar = ($me_row['avatar_url'] ?? null) ?: null;
+    $site_theme = ($me_row['theme'] ?? '') === 'light' ? 'light' : 'dark';
 }
 $me_name = is_logged_in() ? (trim((string)($_SESSION['customer_name'] ?? '')) ?: 'Customer') : '';
 $current = basename($_SERVER['SCRIPT_NAME']);
@@ -23,7 +26,7 @@ $nav_icon = function ($name) {
          . 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $paths[$name] . '</svg>';
 };
 ?><!DOCTYPE html>
-<html lang="en">
+<html lang="en"<?= $site_theme === 'light' ? ' class="theme-light"' : '' ?>>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -39,16 +42,21 @@ $nav_icon = function ($name) {
     <a class="brand brand-logo" href="<?= url('index.php') ?>"><img src="<?= url('assets/images/logo.png') ?>" alt="<?= e($shop_name) ?>" width="720" height="229"></a>
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">&#9776;</button>
     <nav class="nav-links" id="nav-links">
-      <a href="<?= url('index.php') ?>" class="<?= $current === 'index.php' ? 'active' : '' ?>"><?= $nav_icon('home') ?>Home</a>
-      <a href="<?= url('products.php') ?>" class="<?= in_array($current, ['products.php', 'product.php']) ? 'active' : '' ?>"><?= $nav_icon('products') ?>Products</a>
-      <a href="<?= url('reviews.php') ?>" class="<?= $current === 'reviews.php' ? 'active' : '' ?>"><?= $nav_icon('reviews') ?>Reviews</a>
+      <?php /* Desktop: .nav-main sits after the logo and .nav-auth is moved (CSS order) to the far right, just before the cart; on phones both just stack inside the menu. */ ?>
+      <span class="nav-main">
+        <a href="<?= url('index.php') ?>" class="<?= $current === 'index.php' ? 'active' : '' ?>"><?= $nav_icon('home') ?>Home</a>
+        <a href="<?= url('products.php') ?>" class="<?= in_array($current, ['products.php', 'product.php']) ? 'active' : '' ?>"><?= $nav_icon('products') ?>Products</a>
+        <a href="<?= url('reviews.php') ?>" class="<?= $current === 'reviews.php' ? 'active' : '' ?>"><?= $nav_icon('reviews') ?>Reviews</a>
+      </span>
       <?php if (!is_logged_in()): /* logged in: the profile picture on the right opens My Account (Logout is in there) */ ?>
+      <span class="nav-auth">
         <a href="<?= url('login.php') ?>" class="<?= $current === 'login.php' ? 'active' : '' ?>"><?= $nav_icon('login') ?>Login</a>
         <a href="<?= url('register.php') ?>" class="btn btn-sm"><?= $nav_icon('register') ?>Register</a>
+      </span>
       <?php endif; ?>
     </nav>
     <?php /* Header search: always lands on the product list; keeps the typed word when already there. */ ?>
-    <form class="search-bar nav-search" action="<?= url('products.php') ?>" method="get" role="search">
+    <form class="nav-search" action="<?= url('products.php') ?>" method="get" role="search">
       <label class="sr-only" for="nav-search">Search products</label>
       <input type="search" id="nav-search" name="q" value="<?= $current === 'products.php' ? e(trim($_GET['q'] ?? '')) : '' ?>" placeholder="Search equipment...">
       <button type="submit" aria-label="Search">

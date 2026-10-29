@@ -1,21 +1,22 @@
 <?php
-/** My Account: side menu (Profile / Orders / Security / Logout), one section shown at a time (?tab=). */
+/** My Account: side menu (Profile / Orders / Security / Preferences / Logout), one section shown at a time (?tab=). */
 require_once __DIR__ . '/includes/init.php';
 require_login();
 $cid = $_SESSION['customer_id'];
-$tabs = ['profile' => 'Profile', 'orders' => 'My orders', 'security' => 'Security'];
+$tabs = ['profile' => 'Profile', 'orders' => 'My orders', 'security' => 'Security', 'preferences' => 'Preferences'];
 $tab = isset($tabs[$_GET['tab'] ?? '']) ? $_GET['tab'] : 'profile';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['action'] ?? '') === 'profile') {
         $tab = 'profile';
         $first = trim($_POST['first_name'] ?? ''); $last = trim($_POST['last_name'] ?? '');
-        $phone = trim($_POST['phone'] ?? ''); $addr = trim($_POST['address'] ?? '');
+        $phone = trim($_POST['phone'] ?? ''); $addr = trim(preg_replace('/\s+/', ' ', $_POST['address'] ?? '')); // the box is multi-line; store one line
         // full_name stays a convenience "first last" copy of first_name + last_name.
         $name = trim($first . ' ' . $last);
         [$avatar, $err] = upload_image('avatar', 'uploads/avatars');
         if (!$err && ($first === '' || strlen($first) > 50))  $err = 'Please enter your first name (50 characters max).';
         elseif (!$err && ($last === '' || strlen($last) > 50)) $err = 'Please enter your last name (50 characters max).';
+        elseif (!$err && strlen($addr) > 255) $err = 'Delivery address is too long (255 characters max).';
         elseif (!$err && $phone !== '' && !preg_match('/^[0-9+\-\s()]{7,20}$/', $phone)) $err = 'Phone number looks invalid.';
         if ($err) {
             delete_file($avatar);
@@ -41,6 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare('UPDATE customer SET password = ? WHERE customer_id = ?')->execute([password_hash($new, PASSWORD_DEFAULT), $cid]);
             flash('success', 'Password changed.');
         }
+    } elseif (($_POST['action'] ?? '') === 'theme') {
+        $tab = 'preferences';
+        $theme = ($_POST['theme'] ?? '') === 'light' ? 'light' : 'dark';
+        $pdo->prepare('UPDATE customer SET theme = ? WHERE customer_id = ?')->execute([$theme, $cid]);
+        flash('success', $theme === 'light' ? 'Light mode is on.' : 'Dark mode is on.');
     }
     redirect("my_account.php?tab=$tab");
 }
@@ -90,7 +96,7 @@ require __DIR__ . '/includes/header.php';
         <div class="form-group"><label for="ln">Last name</label><input type="text" id="ln" name="last_name" value="<?= e($me['last_name']) ?>" required></div>
       </div>
       <div class="form-group"><label for="ph">Mobile number</label><input type="tel" id="ph" name="phone" value="<?= e($me['phone']) ?>"></div>
-      <div class="form-group"><label for="ad">Delivery address</label><input type="text" id="ad" name="address" value="<?= e($me['address']) ?>"></div>
+      <div class="form-group"><label for="ad">Delivery address</label><textarea id="ad" name="address" rows="3" maxlength="255" class="address-box"><?= e($me['address']) ?></textarea></div>
       <button class="btn" type="submit">Save profile</button>
     </form>
 
@@ -115,6 +121,24 @@ require __DIR__ . '/includes/header.php';
       <?php endforeach; ?>
     </table></div>
     <?php endif; ?>
+
+  <?php elseif ($tab === 'preferences'): ?>
+    <form method="post" class="form-box">
+      <h2>Preferences</h2>
+      <?= csrf_field() ?><input type="hidden" name="action" value="theme">
+      <fieldset class="theme-pick">
+        <legend>Appearance</legend>
+        <?php foreach (['dark' => 'Dark mode', 'light' => 'Light mode'] as $key => $label): ?>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="<?= $key ?>" <?= ($me['theme'] ?? 'dark') === $key ? 'checked' : '' ?>>
+            <span class="theme-swatch theme-swatch-<?= $key ?>" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span><?= $label ?></span>
+          </label>
+        <?php endforeach; ?>
+      </fieldset>
+      <p class="help">Saved to your account, so it follows you on any device you log in on.</p>
+      <button class="btn" type="submit">Save preference</button>
+    </form>
 
   <?php else: ?>
     <form method="post" class="form-box">

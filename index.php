@@ -1,5 +1,5 @@
 <?php
-/** Home page: hero video, categories, featured products, promo videos, about. */
+/** Home page: hero (boxingkabakal.jpg backdrop), categories, featured products, promo videos, about. */
 require_once __DIR__ . '/includes/init.php';
 require_once __DIR__ . '/includes/product_card.php';
 $page_title = 'Home';
@@ -7,8 +7,6 @@ $main_class = '';   // home page uses a full-bleed hero + its own .container sec
 
 // Visible promo videos (newest first)
 $videos = $pdo->query("SELECT * FROM promo_video WHERE is_visible = 1 ORDER BY video_id DESC")->fetchAll();
-$hero_video = null;                                   // first uploaded MP4 becomes the hero background
-foreach ($videos as $v) { if ($v['source_type'] === 'file' && $v['file_path']) { $hero_video = $v; break; } }
 
 // Categories that have at least one active product
 $cats = $pdo->query("SELECT c.category_id, c.name FROM category c
@@ -25,13 +23,7 @@ if (!$featured) {
 require __DIR__ . '/includes/header.php';
 ?>
 <section class="hero">
-  <?php if ($hero_video): ?>
-    <!-- muted + autoplay + loop; poster and preload="metadata" keep the page light -->
-    <video autoplay muted loop playsinline preload="metadata"
-           poster="<?= e($hero_video['poster'] ? url($hero_video['poster']) : '') ?>">
-      <source src="<?= e(url($hero_video['file_path'])) ?>" type="video/mp4">
-    </video>
-  <?php endif; ?>
+  <?php /* Backdrop is only the boxingkabakal.jpg photo (set in style.css .hero); promo videos stay in their own section below. */ ?>
   <div class="container hero-content">
     <h1>Build your <span>strength</span>.<br>Build your gym.</h1>
     <p>Boxing gear, gym equipment and machines for gym owners, athletes and home workouts.</p>

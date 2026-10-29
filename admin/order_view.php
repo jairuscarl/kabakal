@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'status') {
         $new = $_POST['status'] ?? '';
-        if (!in_array($new, ['pending', 'paid', 'shipped', 'delivered', 'cancelled'], true)) flash('error', 'Invalid status.');
+        if (!in_array($new, order_statuses($order['payment_method']), true)) flash('error', 'Invalid status.');
         elseif (set_order_status($order_id, $new, $aid)) flash('success', 'Order status updated.');
         else flash('error', 'A cancelled order cannot be reopened.');
 
@@ -105,9 +105,9 @@ require __DIR__ . '/_header.php';
       <h3>Update status</h3>
       <?= csrf_field() ?><input type="hidden" name="action" value="status"><input type="hidden" name="order_id" value="<?= $order_id ?>">
       <div class="form-group"><select name="status" <?= $order['status'] === 'cancelled' ? 'disabled' : '' ?>>
-        <?php foreach (['pending', 'paid', 'shipped', 'delivered', 'cancelled'] as $s): ?><option value="<?= $s ?>" <?= $order['status'] === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option><?php endforeach; ?></select></div>
+        <?php foreach (order_statuses($order['payment_method']) as $s): ?><option value="<?= $s ?>" <?= $order['status'] === $s ? 'selected' : '' ?>><?= status_label($s) ?></option><?php endforeach; ?></select></div>
       <button class="btn btn-block" type="submit" <?= $order['status'] === 'cancelled' ? 'disabled' : '' ?>>Save status</button>
-      <p class="help">Cancelling returns the items to available stock.</p>
+      <p class="help">Cancelling returns the items to available stock.<?php if ($order['payment_method'] === 'cod'): ?> Cash on Delivery has no Paid step: marking it Delivered records the cash payment.<?php endif; ?></p>
     </form>
     <?php if ($order['status'] !== 'cancelled' && $order['balance'] > 0): ?>
     <form method="post" class="summary" style="margin-top:16px">

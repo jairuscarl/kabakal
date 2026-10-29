@@ -31,7 +31,7 @@ img, video { max-width: 100%; display: block; }
 .muted { color: var(--muted); } .right { text-align: right; } .center { text-align: center; }
 
 /* ---- Header / nav ---- */
-.site-header { background: var(--black); border-bottom: 3px solid var(--orange); position: sticky; top: 0; z-index: 50; }
+.site-header { background: rgba(11,11,11,.8); position: sticky; top: 0; z-index: 50; } /* 80% opaque black, no bottom line */
 .nav { display: flex; align-items: center; justify-content: space-between; min-height: 64px; gap: 16px; }
 .brand { font-size: 1.6rem; font-weight: 700; color: var(--white); margin: 0; } .brand span { color: var(--orange); } .brand:hover { text-decoration: none; }
 .nav-links { display: flex; align-items: center; gap: 22px; }
@@ -43,6 +43,8 @@ img, video { max-width: 100%; display: block; }
 }
 .nav-links a.btn { color: #000; }
 .nav-toggle { display: none; background: none; border: 2px solid var(--orange); color: var(--orange); font-size: 1.4rem; border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+/* Menu open (main.js sets aria-expanded): filled orange button, black bars. */
+.nav-toggle[aria-expanded="true"] { background: var(--orange); color: #000; }
 .cart-badge { background: var(--orange); color: #000; border-radius: 999px; padding: 0 8px; font-size: .8rem; font-weight: 700; }
 
 /* Customer header layout: logo on the left, the links centred in the bar, cart icon alone on the right.
@@ -61,10 +63,14 @@ img, video { max-width: 100%; display: block; }
 /* Header search (full-width bar): logo | links | search | icons. On desktop the bar is a flex row with
    space-between (see the min-width: 861px block), so the gaps between the four groups are equal; the search
    wants 480px and is the first thing to shrink, down to 150px.
-   Reuses the .search-bar pill from the products page, just slimmer and without its bottom margin. */
-.site-header .nav-search { grid-area: 1 / 3; width: 100%; margin: 0; }
-.site-header .nav-search input[type=search] { padding: 8px 46px 8px 16px; }
-.site-header .nav-search button { width: 32px; height: 32px; right: 5px; }
+   A rounded pill with the magnifier button inside its right edge. */
+.site-header .nav-search { position: relative; grid-area: 1 / 3; width: 100%; margin: 0; }
+/* .nav-main / .nav-auth group the links for the desktop row; on phones they are display:contents. */
+.nav-main, .nav-auth { display: flex; align-items: center; }
+.site-header .nav-search input[type=search] { border-radius: 999px; padding: 8px 46px 8px 16px; background: var(--panel); border-width: 2px; }
+.site-header .nav-search button { position: absolute; top: 50%; right: 5px; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: var(--orange); color: #000; cursor: pointer; }
+.site-header .nav-search button:hover { background: var(--orange-dark); }
 
 .site-header .nav-cart { grid-area: 1 / 4; justify-self: end; }
 /* Mail (inbox) + cart icons stay side by side, also on phones where .nav-right is display:contents */
@@ -87,20 +93,29 @@ img, video { max-width: 100%; display: block; }
    861px to 1920px: single row, no overlap, no horizontal scroll). <=860px keeps the hamburger
    layout below, which overrides these values. */
 @media (min-width: 861px) {
-  .site-header .nav { display: flex; align-items: center; justify-content: space-between; }
-  .site-header .nav > .brand, .site-header .nav-right { flex: none; }
-  .site-header .nav-links { flex: none; }
+  /* Row: logo | Home Products Reviews | search | Login Register | icons. .nav-links is display:contents so
+     its two groups become flex items of the bar; .nav-auth gets order 1 to land after the search, right
+     before the icons. The three auto margins share the free space evenly between logo, links and search. */
+  .site-header .nav { display: flex; align-items: center; }
+  .site-header .nav > .brand, .site-header .nav-right, .nav-main, .nav-auth { flex: none; }
+  .site-header .nav > .brand, .site-header .nav-main, .site-header .nav-search { margin-right: auto; }
+  .site-header .nav-main { gap: clamp(0px, calc((100vw - 1100px) / 20), 12px); }
+  .site-header .nav-auth { order: 1; margin-left: 16px; gap: 6px; }
+  .site-header .nav-right { order: 2; margin-left: 16px; }
   .site-header .nav-search { flex: 0 1 480px; min-width: 150px; align-self: center; }
-  .site-header .nav-links { flex-wrap: nowrap; gap: clamp(0px, calc((100vw - 1100px) / 20), 12px); font-size: clamp(13px, 1.15vw, 16px); }
+  .site-header .nav-links { display: contents; font-size: clamp(13px, 1.15vw, 16px); }
   .site-header .nav-links a { padding: 8px clamp(5px, .85vw, 12px); }
   /* Extra room only between Home, Products and Reviews (the first two links get it on their right);
      Login / Register keep the normal tight gap. */
-  .site-header .nav-links a:nth-child(-n+2) { margin-right: clamp(0px, calc((100vw - 900px) / 10), 36px); }
+  .site-header .nav-main a:nth-child(-n+2) { margin-right: clamp(0px, calc((100vw - 900px) / 10), 36px); }
   .site-header .nav-links a.btn-sm { padding: 6px clamp(5px, .7vw, 10px); font-size: clamp(12px, .95vw, .9rem); }
 }
 /* Tightest desktop band (861-1000px): slim the logo and step the greeting down one size to buy the
    single row ~42px; above 1000px both return to their normal sizes. */
 @media (min-width: 861px) and (max-width: 1000px) {
+  .site-header .nav-search { min-width: 110px; }
+  .site-header .nav-auth, .site-header .nav-right { margin-left: 6px; }
+  .site-header .nav-auth { gap: 0; }
   .brand-logo img { height: 44px; }
   .site-header .nav-welcome { font-size: 12px; }
 }
@@ -117,11 +132,13 @@ img, video { max-width: 100%; display: block; }
 /* ---- Alerts & badges ---- */
 .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; border-left: 5px solid; background: var(--panel); }
 .alert-success { border-color: var(--green); } .alert-error { border-color: var(--red); } .alert-info { border-color: var(--blue); }
+/* One-time messages (show_flash) fade out after 5 s; main.js adds .flash-hide, then removes the box. */
+.flash { transition: opacity .5s ease; } .flash.flash-hide { opacity: 0; }
 .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: #444; color: #fff; white-space: nowrap; }
 .badge-paid, .badge-delivered, .badge-available, .badge-active, .badge-verified { background: var(--green); color: #000; }
 .badge-pending, .badge-pending-verification, .badge-reserved, .badge-partially-paid { background: var(--yellow); color: #000; }
 .badge-unpaid, .badge-cancelled, .badge-failed, .badge-out-of-stock, .badge-damaged, .badge-discontinued { background: var(--red); color: #000; }
-.badge-shipped, .badge-sold { background: var(--blue); color: #000; }
+.badge-shipped, .badge-in-transit, .badge-sold { background: var(--blue); color: #000; }
 
 /* ---- Hero ---- */
 /* Gym photo backdrop (assets/images/kabakal_bg.jpg, 1672x941). The hero box is given the photo's
@@ -139,7 +156,6 @@ img, video { max-width: 100%; display: block; }
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
 }
-.hero video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
 .hero-content { position: relative; z-index: 2; padding: 48px 0; max-width: 640px; margin-left: 250px; top: -90px;}
 .hero-content p { font-size: 1.15rem; color: #eee; margin-bottom: 24px; }
 .hero h1 span { color: var(--orange); }
@@ -197,6 +213,9 @@ img, video { max-width: 100%; display: block; }
 .media-admin-item { position: relative; width: 130px; display: flex; flex-direction: column; gap: 4px; }
 .media-admin-item img, .media-admin-item video { width: 130px; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: #111; }
 .media-tag { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.7); font-size: .75rem; padding: 1px 6px; border-radius: 4px; }
+/* cart.php: product photo in front of the name */
+.cart-product { display: flex; align-items: center; gap: 12px; }
+.cart-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2); flex: none; }
 .buy-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-top: 20px; }
 
 /* ---- Forms ---- */
@@ -205,6 +224,7 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   width: 100%; padding: 11px 12px; border-radius: 6px; border: 1px solid var(--line); background: #101010; color: var(--white); font: inherit; }
 input:focus, select:focus, textarea:focus { border-color: var(--orange); outline: none; }
 input[type=number] { max-width: 110px; } textarea { min-height: 100px; resize: vertical; }
+textarea.address-box { min-height: 0; } /* my_account.php delivery address: 3 rows tall via rows="3" */
 .form-box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 24px; max-width: 520px; margin-inline: auto; }
 .form-wide { max-width: 760px; margin-inline: 0; }
 .form-row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
@@ -223,12 +243,6 @@ input[type=number] { max-width: 110px; } textarea { min-height: 100px; resize: v
 
 .check { display: flex; gap: 8px; align-items: center; font-weight: 400; } .check input { width: auto; }
 .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; } .filter-bar input, .filter-bar select { width: auto; min-width: 180px; }
-/* products.php search: a centred pill with the magnifier button sitting inside its right edge. */
-.search-bar { position: relative; width: min(560px, 100%); margin: 0 auto 22px; }
-.search-bar input[type=search] { border-radius: 999px; padding: 12px 54px 12px 20px; background: var(--panel); border-width: 2px; }
-.search-bar button { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 50%;
-  display: grid; place-items: center; background: var(--orange); color: #000; cursor: pointer; }
-.search-bar button:hover { background: var(--orange-dark); }
 /* "Available only" toggle: pushed to the end of the category chips, with a green tint when on. */
 .chip-toggle { margin-left: auto; border-style: dashed; }
 .chip-toggle.active { background: var(--green); border-color: var(--green); border-style: solid; }
@@ -341,7 +355,6 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
      photo, so the photo's position is the 2nd value: gradient center, photo right. */
   body { background-position: right top, right top; background-attachment: scroll, scroll; }
   .hero { background-position: center center, right center; }
-  .hero video { object-position: right center; }
   /* aspect-ratio would derive a 675px-wide hero from min-height on phones, forcing a sideways scroll. */
   /* Hero copy: drop the desktop indent/shift so the headline stays inside the screen on phones.
      margin-left goes back to auto so .container keeps centring the box with its side gutter. */
@@ -351,8 +364,11 @@ tr:last-child td { border-bottom: 0; } td .thumb { width: 56px; height: 42px; ob
   .site-header .nav { grid-template-columns: 1fr auto auto; }
   .site-header .nav-icons { grid-area: 1 / 2; }
   .site-header .nav-toggle { grid-area: 1 / 3; justify-self: end; }
+  .nav-main, .nav-auth { display: contents; }
   .site-header .nav-search { grid-row: 2; grid-column: 1 / -1; width: 100%; margin-bottom: 10px; }
-  .site-header .nav-links { grid-row: 3; grid-column: 1 / -1; gap: 12px; } .nav-right { display: contents; } .site-header .nav-welcome { grid-row: 4; grid-column: 1 / -1; justify-self: end; padding: 0 0 10px; font-size: .9rem; }
+  /* Opened menu drops down OVER the page (absolute to the sticky header) instead of pushing the page down. */
+  .site-header .nav-links { position: absolute; top: 100%; left: 0; right: 0; z-index: 49; gap: 12px; padding: 12px clamp(16px, 2.5vw, 40px) 18px;
+    background: var(--black); box-shadow: 0 12px 24px rgba(0,0,0,.5); } .nav-right { display: contents; } .site-header .nav-welcome { grid-row: 3; grid-column: 1 / -1; justify-self: end; padding: 0 0 10px; font-size: .9rem; }
 }
 @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } .card-body { padding: 10px; } .price { font-size: 1.15rem; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
@@ -454,15 +470,19 @@ body.lightbox-open { overflow: hidden; }
 .track-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .track-items { margin: 4px 0 14px; font-size: .9rem; }
 .track-steps { list-style: none; margin: 0; padding: 0; display: flex; }
-.track-steps li { flex: 1; position: relative; text-align: center; font-size: .82rem; color: var(--muted); padding-top: 24px; }
-.track-steps li::before { content: ""; position: absolute; top: 8px; left: -50%; width: 100%; height: 3px; background: var(--line); }
+.track-steps li { flex: 1; position: relative; text-align: center; font-size: .82rem; color: var(--muted); padding-top: 56px; min-width: 0; }
+/* step icon on top, then the dot on the progress line, then the label */
+.track-icon { position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
+.track-steps li::before { content: ""; position: absolute; top: 38px; left: -50%; width: 100%; height: 3px; background: var(--line); }
 .track-steps li:first-child::before { display: none; }
-.track-dot { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 15px; height: 15px; border-radius: 50%; background: var(--panel-2); border: 2px solid var(--line); z-index: 1; }
+.track-dot { position: absolute; top: 32px; left: 50%; transform: translateX(-50%); width: 15px; height: 15px; border-radius: 50%; background: var(--panel-2); border: 2px solid var(--line); z-index: 1; }
 .track-steps li.done, .track-steps li.current { color: var(--white); }
-.track-steps li.done::before, .track-steps li.current::before { background: var(--orange); }
-.track-steps li.done .track-dot { background: var(--orange); border-color: var(--orange); }
-.track-steps li.current .track-dot { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255,166,0,.25); }
-.track-steps li.current { font-weight: 700; color: var(--orange); }
+/* Reached steps go green: icon, line, dot. The current step's label is bold in normal text colour. */
+.track-steps li.done .track-icon, .track-steps li.current .track-icon { color: var(--green); }
+.track-steps li.done::before, .track-steps li.current::before { background: var(--green); }
+.track-steps li.done .track-dot { background: var(--green); border-color: var(--green); }
+.track-steps li.current .track-dot { border-color: var(--green); box-shadow: 0 0 0 4px rgba(46,204,113,.25); }
+.track-steps li.current { font-weight: 700; }
 .inbox-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .inbox-list li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: var(--panel); border-top: 1px solid var(--line); }
 .inbox-list li:first-child { border-top: 0; }
@@ -631,3 +651,39 @@ tr.row-unread td { background: var(--panel-2); }
   .receipt-slip, .receipt-slip * { visibility: visible; }
   .receipt-slip { position: absolute; left: 0; top: 0; box-shadow: none !important; }
 }
+
+/* ---- Light mode (customer's choice in My Account > Preferences; includes/header.php puts
+   class="theme-light" on <html>). Most of this file is built on the tokens in :root, so swapping
+   them here restyles almost everything; the rules after it fix what is hard-coded for the dark shop.
+   --white is the TEXT colour and --black the PAGE colour, as in the dark theme. The orange is
+   darkened so orange links read on white (~4.6:1) while black text on orange buttons still does too. */
+html.theme-light {
+  color-scheme: light;
+  --black: #f3f3f1;  --panel: #ffffff;  --panel-2: #efefec;  --line: #dadad6;
+  --white: #17191c;  --muted: #5d6167;
+  --orange: #b05e00; --orange-dark: #8f4c00;
+  --green: #1f9d55;
+}
+html.theme-light body {
+  background-image: linear-gradient(rgba(243,243,241,.94), rgba(243,243,241,.97)), url("../images/kabakal_bg.jpg");
+}
+html.theme-light .site-header { background: rgba(255,255,255,.85); box-shadow: 0 1px 0 var(--line); }
+html.theme-light :is(input, select, textarea), html.theme-light .like-btn { background: #fff; }
+html.theme-light .pw-toggle:hover, html.theme-light .pw-toggle:focus-visible { background: rgba(0,0,0,.06); }
+html.theme-light .site-header .nav-links { box-shadow: 0 12px 24px rgba(0,0,0,.12); }
+/* The home banner is a dark photo: keep the dark theme's tokens inside it so its text stays light. */
+html.theme-light .hero { --white: #fff; --line: #333; --muted: #a8a8a8; --orange: #ffa600; --orange-dark: #d95a00; color: var(--white); }
+
+/* My Account > Preferences: two radio "cards" with a mini preview of each theme */
+.theme-pick { border: 0; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 14px; }
+.theme-pick legend { font-weight: 600; margin-bottom: 10px; padding: 0; }
+.theme-option { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin: 0; cursor: pointer;
+  border: 2px solid var(--line); border-radius: 10px; padding: 12px; width: 170px; font-weight: 600; }
+.theme-option input { position: absolute; opacity: 0; pointer-events: none; }
+.theme-option:has(input:checked) { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,166,0,.25); }
+.theme-option:has(input:focus-visible) { outline: 3px solid var(--orange); outline-offset: 2px; }
+.theme-swatch { display: grid; grid-template-columns: 1fr 2fr; grid-template-rows: 10px 1fr; gap: 4px; width: 100%; height: 70px; padding: 6px; border-radius: 6px; border: 1px solid var(--line); }
+.theme-swatch i { border-radius: 3px; }
+.theme-swatch i:first-child { grid-column: 1 / -1; }
+.theme-swatch-dark { background: #0b0b0b; } .theme-swatch-dark i { background: #222; } .theme-swatch-dark i:first-child { background: #ffa600; }
+.theme-swatch-light { background: #f3f3f1; } .theme-swatch-light i { background: #fff; border: 1px solid #dadad6; } .theme-swatch-light i:first-child { background: #b05e00; border: 0; }

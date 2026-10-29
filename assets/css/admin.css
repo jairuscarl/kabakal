@@ -237,3 +237,35 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
   .admin-layout .admin-nav .admin-nav-bottom { margin-top: auto; border-top: 1px solid var(--sidebar-line); border-radius: 0; padding-top: 14px; }
   .admin-layout .admin-nav a.btn { justify-content: center; margin-top: 6px; padding: 7px 12px; font-size: .86rem; border-left-width: 1px; }
 }
+
+/* ---- Dashboard: "Sales per month" bar chart (admin/index.php) ----
+   One series, so no legend: the heading names it. Bars use the brand accent token, so they follow
+   light / dark mode. The y-axis top is a "nice" number from PHP; three recessive gridlines (0, half,
+   top) carry the scale, only the peak month gets a direct value label, and hovering / focusing a
+   month shows its exact sales + orders. The same numbers are in the "Show as table" view. */
+.sales-chart { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px 20px 12px 84px; margin-bottom: 28px; box-shadow: var(--shadow); }
+.sc-plot { position: relative; height: 220px; }
+.sc-grid { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+.sc-grid span { position: absolute; right: calc(100% + 10px); transform: translateY(-50%); font-size: .75rem; color: var(--muted); white-space: nowrap; }
+.sc-bars { position: absolute; inset: 0; display: flex; gap: 2px; }
+.sc-col { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center; cursor: default; outline: none; border-radius: 4px; }
+.sc-col:hover, .sc-col:focus-visible { background: var(--panel-2); }
+.sc-col:focus-visible { box-shadow: 0 0 0 2px var(--focus); }
+.sc-bar { position: relative; width: min(60%, 36px); min-height: 0; background: var(--orange); border-radius: 4px 4px 0 0; opacity: .85; transition: opacity .15s; }
+.sc-col:hover .sc-bar, .sc-col:focus-visible .sc-bar { opacity: 1; }
+.sc-value { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: .75rem; font-weight: 600; color: var(--white); white-space: nowrap; }
+.sc-tip { display: none; position: absolute; z-index: 5; bottom: calc(100% - 20px); left: 50%; transform: translateX(-50%); min-width: 130px;
+  background: var(--ink); color: var(--ink-text); border-radius: 6px; padding: 8px 10px; font-size: .8rem; line-height: 1.35; text-align: left; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+.sc-tip b { display: block; font-weight: 600; } .sc-tip span { display: block; opacity: .8; }
+.sc-col:first-child .sc-tip { left: 0; transform: none; } .sc-col:last-child .sc-tip { left: auto; right: 0; transform: none; }
+.sc-col:hover .sc-tip, .sc-col:focus-visible .sc-tip { display: block; }
+.sc-months { display: flex; gap: 2px; margin-top: 6px; }
+.sc-months span { flex: 1; text-align: center; font-size: .75rem; color: var(--muted); line-height: 1.2; }
+.sc-months small { display: block; font-size: .7rem; }
+.sc-table { margin: 12px 0 0 -64px; }
+.sc-table summary { cursor: pointer; font-size: .85rem; color: var(--muted); }
+.sc-table .table-wrap { margin-top: 10px; }
+@media (max-width: 600px) {
+  .sales-chart { padding-left: 64px; } .sc-table { margin-left: -44px; }
+  .sc-months span { font-size: .65rem; } .sc-months small { display: none; }
+}

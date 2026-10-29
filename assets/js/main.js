@@ -257,3 +257,11 @@ document.querySelectorAll('[data-receipt-png]').forEach(function (btn) {
 document.querySelectorAll('[data-print]').forEach(function (btn) {
   btn.addEventListener('click', function () { window.print(); });
 });
+
+// One-time messages ("You have been logged out." etc.) fade out after 5 seconds
+document.querySelectorAll('.flash').forEach(function (box) {
+  setTimeout(function () {
+    box.classList.add('flash-hide');
+    setTimeout(function () { box.remove(); }, 500);
+  }, 5000);
+});

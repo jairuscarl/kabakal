@@ -15,7 +15,7 @@ require __DIR__ . '/_header.php';
 <form class="filter-bar" method="get">
   <input type="search" name="q" value="<?= e($q) ?>" placeholder="Customer name or order #">
   <select name="status"><option value="">All order statuses</option>
-    <?php foreach (['pending', 'paid', 'shipped', 'delivered', 'cancelled'] as $s): ?><option value="<?= $s ?>" <?= $status === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option><?php endforeach; ?></select>
+    <?php foreach (ORDER_STATUSES as $s): ?><option value="<?= $s ?>" <?= $status === $s ? 'selected' : '' ?>><?= status_label($s) ?></option><?php endforeach; ?></select>
   <select name="pay"><option value="">All payment states</option>
     <?php foreach ($pay_map as $k => $label): ?><option value="<?= $k ?>" <?= $pay === $k ? 'selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select>
   <button class="btn btn-sm" type="submit">Filter</button>

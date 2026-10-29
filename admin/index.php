@@ -1,9 +1,9 @@
 <?php
-/** Admin dashboard: totals + sales summary + recent orders. */
+/** Admin dashboard: totals + monthly sales chart + item performance + recent orders. */
 require_once __DIR__ . '/../includes/init.php';
 require_admin();
 
-require_once __DIR__ . '/../includes/reports.php';   // dashboard_summary() + item_performance(): also used by the Sales Report download
+require_once __DIR__ . '/../includes/reports.php';   // dashboard_summary() + item_performance() + monthly_sales(): also used by the Sales Report download
 
 [$stats, $sales_total, $sales_month, $receivables] = dashboard_summary();
 
@@ -25,6 +25,17 @@ $recent = array_slice(fetch_orders(), 0, 8);
 // ---------- Item performance: units sold per product (cancelled orders excluded), High / Moderate / Low ----------
 $perf = item_performance();
 
+// ---------- Sales chart: verified sales per month, last 12 months ----------
+$monthly = monthly_sales();
+$peak = max(array_column($monthly, 'sales'));
+// y-axis top: the peak rounded up to a "nice" number (1, 1.2, 1.5, 2 ... 8 x 10^n), so the gridlines read cleanly
+$axis_max = 1000;
+if ($peak > 0) {
+    $mag = 10 ** floor(log10($peak));
+    foreach ([1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10] as $m) { if ($m * $mag >= $peak) { $axis_max = $m * $mag; break; } }
+}
+$peak_i = $peak > 0 ? array_search($peak, array_column($monthly, 'sales')) : -1;
+
 $page_title = 'Dashboard';
 require __DIR__ . '/_header.php';
 ?>
@@ -34,6 +45,38 @@ require __DIR__ . '/_header.php';
   <div class="stat"><b><?= peso($sales_total) ?></b><span>Total sales (verified)</span></div>
   <div class="stat"><b><?= peso($sales_month) ?></b><span>Sales this month</span></div>
   <div class="stat"><b><?= peso($receivables) ?></b><span>Unpaid balances</span></div>
+</div>
+<div class="page-head"><h2>Sales per month</h2><span class="muted">Verified payments &middot; last 12 months</span></div>
+<div class="sales-chart">
+  <div class="sc-plot" role="img" aria-label="Bar chart of verified sales per month for the last 12 months. The same numbers are in the table below.">
+    <?php foreach ([1, .5, 0] as $f): ?>
+      <div class="sc-grid" style="bottom: <?= $f * 100 ?>%"><span><?= $f ? '&#8369;' . number_format($axis_max * $f) : '0' ?></span></div>
+    <?php endforeach; ?>
+    <div class="sc-bars">
+      <?php foreach ($monthly as $i => $m): $label = date('M Y', strtotime($m['ym'] . '-01')); ?>
+        <div class="sc-col<?= $i === count($monthly) - 1 ? ' sc-now' : '' ?>" tabindex="0" aria-label="<?= e($label . ': ' . peso($m['sales']) . ', ' . $m['orders'] . ' orders') ?>">
+          <div class="sc-bar" style="height: <?= round($m['sales'] / $axis_max * 100, 2) ?>%">
+            <?php if ($i === $peak_i): ?><span class="sc-value"><?= peso($m['sales']) ?></span><?php endif; ?>
+          </div>
+          <div class="sc-tip" aria-hidden="true"><b><?= e($label) ?></b><?= peso($m['sales']) ?><span><?= (int)$m['orders'] ?> order<?= $m['orders'] == 1 ? '' : 's' ?> placed</span></div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <div class="sc-months" aria-hidden="true">
+    <?php foreach ($monthly as $i => $m): $t = strtotime($m['ym'] . '-01'); ?>
+      <span><?= date('M', $t) ?><?php if ($i === 0 || date('n', $t) == 1): ?><small><?= date('Y', $t) ?></small><?php endif; ?></span>
+    <?php endforeach; ?>
+  </div>
+  <details class="sc-table">
+    <summary>Show as table</summary>
+    <div class="table-wrap"><table>
+      <tr><th>Month</th><th>Verified sales</th><th>Orders placed</th></tr>
+      <?php foreach (array_reverse($monthly) as $m): ?>
+        <tr><td><?= date('F Y', strtotime($m['ym'] . '-01')) ?></td><td><?= peso($m['sales']) ?></td><td><?= (int)$m['orders'] ?></td></tr>
+      <?php endforeach; ?>
+    </table></div>
+  </details>
 </div>
 <div class="page-head"><h2>Item performance</h2><span class="muted">Based on units sold &middot; cancelled orders not counted</span></div>
 <div class="perf-grid">

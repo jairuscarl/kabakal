@@ -8,7 +8,7 @@
 
 // ---------- Filters: only known values are accepted ----------
 
-const ORDER_STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
+const ORDER_STATUSES = ['pending', 'paid', 'shipped', 'in_transit', 'delivered', 'cancelled'];
 const ORDER_PAY_FILTERS = ['unpaid' => 'Unpaid', 'partial' => 'Partially Paid', 'pending' => 'Pending Verification', 'paid' => 'Paid'];
 const INVENTORY_VIEWS = ['available' => 'Available', 'reserved' => 'Reserved', 'sold' => 'Sold', 'damaged' => 'Damaged',
                          'out_of_stock' => 'Out of Stock', 'stock_low_high' => 'Low stock to high stock', 'stock_high_low' => 'High stock to low stock'];
@@ -138,6 +138,26 @@ function item_performance() {
     return $perf;
 }
 
+/** Dashboard chart: verified sales (paid payments) and orders placed (not cancelled) for each of the last 12 months, oldest first. */
+function monthly_sales() {
+    global $pdo;
+    $since = date('Y-m-01', strtotime('first day of -11 months'));
+    $months = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $ym = date('Y-m', strtotime("first day of -$i months"));
+        $months[$ym] = ['ym' => $ym, 'sales' => 0.0, 'orders' => 0];
+    }
+    $st = $pdo->prepare("SELECT DATE_FORMAT(payment_date, '%Y-%m') AS ym, SUM(amount) AS sales FROM payment
+                         WHERE payment_status = 'paid' AND payment_date >= ? GROUP BY ym");
+    $st->execute([$since]);
+    foreach ($st as $r) { if (isset($months[$r['ym']])) $months[$r['ym']]['sales'] = (float)$r['sales']; }
+    $st = $pdo->prepare("SELECT DATE_FORMAT(order_date, '%Y-%m') AS ym, COUNT(*) AS n FROM orders
+                         WHERE status <> 'cancelled' AND order_date >= ? GROUP BY ym");
+    $st->execute([$since]);
+    foreach ($st as $r) { if (isset($months[$r['ym']])) $months[$r['ym']]['orders'] = (int)$r['n']; }
+    return array_values($months);
+}
+
 // ---------- Report definitions for the downloads ----------
 
 const REPORT_TYPES = ['sales' => 'Sales Report', 'orders' => 'Orders Report', 'inventory' => 'Inventory Report',
@@ -170,12 +190,12 @@ function report_build($type, array $f) {
 
     if ($type === 'orders') {
         if ($f['q'] !== '')      $r['filters']['Search'] = $f['q'];
-        if ($f['status'] !== '') $r['filters']['Order status'] = ucfirst($f['status']);
+        if ($f['status'] !== '') $r['filters']['Order status'] = status_label($f['status']);
         if ($f['pay'] !== '')    $r['filters']['Payment state'] = ORDER_PAY_FILTERS[$f['pay']];
         $rows = [];
         foreach (orders_report_rows($f['q'], $f['status'], $f['pay']) as $o) {
             $rows[] = [(int)$o['order_id'], $date($o['order_date']), $o['customer_name'], (float)$o['total_amount'], (float)$o['paid_amount'],
-                       $o['status'] === 'cancelled' ? null : (float)$o['balance'], ucfirst($o['status']), $o['pay_state'],
+                       $o['status'] === 'cancelled' ? null : (float)$o['balance'], status_label($o['status']), $o['pay_state'],
                        ($o['payment_method'] ?? 'gcash') === 'cod' ? 'Cash on Delivery' : 'GCash'];
         }
         $r['summary'][] = ['Orders', count($rows), 'int'];

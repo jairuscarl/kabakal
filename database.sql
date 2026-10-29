@@ -46,6 +46,7 @@ CREATE TABLE customer (
   password     VARCHAR(255) NOT NULL,  -- store a hash
   address      VARCHAR(255) NULL,
   avatar_url   VARCHAR(255) NULL,      -- ADDED: profile picture (uploads/avatars/...)
+  theme        ENUM('dark','light') NOT NULL DEFAULT 'dark',  -- ADDED: light / dark mode (My Account > Preferences)
   created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (customer_id),
   UNIQUE KEY uq_customer_email (email)
@@ -139,7 +140,7 @@ CREATE TABLE orders (
   order_date        DATE NOT NULL DEFAULT (CURRENT_DATE),
   total_amount      DECIMAL(12,2) NOT NULL DEFAULT 0.00 CHECK (total_amount >= 0),
   payment_method    ENUM('gcash','cod') NOT NULL DEFAULT 'gcash',   -- ADDED: GCash or Cash on Delivery
-  status            ENUM('pending','paid','shipped','delivered','cancelled')
+  status            ENUM('pending','paid','shipped','in_transit','delivered','cancelled')  -- in_transit ADDED
                     NOT NULL DEFAULT 'pending',
   shipping_date     DATE NULL,
   shipping_address  VARCHAR(255) NOT NULL,

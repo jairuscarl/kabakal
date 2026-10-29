@@ -56,6 +56,23 @@ try {
     if (!$has_avatar) $pdo->exec('ALTER TABLE customer ADD COLUMN avatar_url VARCHAR(255) NULL AFTER address');
 } catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
 
+// Customer's light / dark mode choice (My Account > Preferences); the shop is dark by default
+try {
+    $has_theme = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS
+                              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customer'
+                                AND COLUMN_NAME = 'theme'")->fetchColumn();
+    if (!$has_theme) $pdo->exec("ALTER TABLE customer ADD COLUMN theme ENUM('dark','light') NOT NULL DEFAULT 'dark' AFTER avatar_url");
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
+// "In transit" order status (between Shipped and Delivered)
+try {
+    $status_type = $pdo->query("SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'status'")->fetchColumn();
+    if ($status_type && strpos($status_type, 'in_transit') === false) {
+        $pdo->exec("ALTER TABLE orders MODIFY status ENUM('pending','paid','shipped','in_transit','delivered','cancelled') NOT NULL DEFAULT 'pending'");
+    }
+} catch (PDOException $e) { /* ignored on purpose: the check simply runs again on the next request */ }
+
 // Extra product photos / videos (the gallery on the product page). equipment.image_url stays the main photo.
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS product_media (
@@ -152,7 +169,7 @@ function flash($type, $msg) { $_SESSION['flash'][] = [$type, $msg]; }
 /** Print and clear the stored messages. */
 function show_flash() {
     foreach ($_SESSION['flash'] ?? [] as [$type, $msg]) {
-        echo '<div class="alert alert-' . e($type) . '">' . e($msg) . '</div>';
+        echo '<div class="alert alert-' . e($type) . ' flash" role="status">' . e($msg) . '</div>'; // .flash: main.js hides it after 5 s
     }
     unset($_SESSION['flash']);
 }
@@ -492,9 +509,16 @@ function inventory_move($eid, $from, $to, $qty, $admin_id = null) {
     inv_change($eid, $to,   +$qty, $admin_id);
 }
 
+/** Statuses an admin can set. Cash on Delivery orders skip "paid": the money is collected on delivery
+    (set_order_status() records that cash payment when a COD order is marked delivered). */
+function order_statuses($payment_method) {
+    $all = ['pending', 'paid', 'shipped', 'in_transit', 'delivered', 'cancelled'];
+    return $payment_method === 'cod' ? array_values(array_diff($all, ['paid'])) : $all;
+}
+
 /** Which inventory bucket an order's items sit in for each order status. */
 function order_bucket($status) {
-    return ['pending' => 'reserved', 'paid' => 'sold', 'shipped' => 'sold', 'delivered' => 'sold', 'cancelled' => 'available'][$status];
+    return ['pending' => 'reserved', 'paid' => 'sold', 'shipped' => 'sold', 'in_transit' => 'sold', 'delivered' => 'sold', 'cancelled' => 'available'][$status];
 }
 
 /** Change an order's status and move its items between inventory buckets. Returns true/false. */
@@ -559,6 +583,7 @@ function order_status_message($order_id, $status) {
         'pending'   => "Order $n was moved back to pending.",
         'paid'      => "Order $n is fully paid and confirmed. We are preparing your items. Your receipt is ready on the order page.",
         'shipped'   => "Order $n has been shipped and is on its way!",
+        'in_transit' => "Order $n is in transit with our rider and will arrive soon.",
         'delivered' => "Order $n was delivered. Enjoy your equipment, and leave us a review!",
         'cancelled' => "Order $n was cancelled by the shop.",
     ][$status] ?? "Order $n was updated.";
@@ -615,18 +640,21 @@ function payment_state($o) {
     return 'Unpaid';
 }
 
-/** After a payment is verified: if the order is fully paid, mark it Paid. */
+/** After a payment is verified: if an online (GCash) order is fully paid, mark it Paid. COD orders have no Paid step. */
 function refresh_order_after_payment($order_id, $admin_id = null) {
     $rows = fetch_orders('AND o.order_id = ?', [$order_id]);
-    if ($rows && $rows[0]['status'] === 'pending' && $rows[0]['pay_state'] === 'Paid') {
+    if ($rows && $rows[0]['payment_method'] !== 'cod' && $rows[0]['status'] === 'pending' && $rows[0]['pay_state'] === 'Paid') {
         set_order_status($order_id, 'paid', $admin_id);
     }
 }
 
+/** Readable name for a status value: "in_transit" -> "In transit". */
+function status_label($s) { return ucfirst(str_replace('_', ' ', $s)); }
+
 /** Coloured label for a status word. */
 function badge($text) {
     $class = strtolower(preg_replace('/[^a-z]+/i', '-', $text));
-    return '<span class="badge badge-' . e($class) . '">' . e(ucfirst($text)) . '</span>';
+    return '<span class="badge badge-' . e($class) . '">' . e(status_label($text)) . '</span>';
 }
 
 /** Five star glyphs for a rating (first $n filled). Used by reviews.php and Admin > Reviews. */

@@ -51,8 +51,11 @@ require __DIR__ . '/includes/header.php';
       <tr><th>Product</th><th>Price</th><th>Quantity</th><th>Subtotal</th><th></th></tr>
       <?php foreach ($items as $it): ?>
       <tr>
-        <td><a href="<?= url('product.php?id=' . (int)$it['equipment_id']) ?>"><?= e($it['name']) ?></a>
-            <?php if ($it['stock_quantity'] < $it['quantity']): ?><br><span class="badge badge-out-of-stock">Only <?= (int)$it['stock_quantity'] ?> left</span><?php endif; ?></td>
+        <td><div class="cart-product">
+            <a href="<?= url('product.php?id=' . (int)$it['equipment_id']) ?>"><img class="cart-thumb" src="<?= e(product_image($it['image_url'])) ?>" alt="" width="56" height="56" loading="lazy"></a>
+            <div><a href="<?= url('product.php?id=' . (int)$it['equipment_id']) ?>"><?= e($it['name']) ?></a>
+            <?php if ($it['stock_quantity'] < $it['quantity']): ?><br><span class="badge badge-out-of-stock">Only <?= (int)$it['stock_quantity'] ?> left</span><?php endif; ?></div>
+        </div></td>
         <td><?= peso($it['price']) ?></td>
         <td>
           <form method="post" class="inline-form">

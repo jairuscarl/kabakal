@@ -1,5 +1,5 @@
 <?php
-/** Product list with category filter, in-stock filter + search. */
+/** Product list with category filter, in-stock filter + search (the search box is in the header). */
 require_once __DIR__ . '/includes/init.php';
 require_once __DIR__ . '/includes/product_card.php';
 $page_title = 'Products';
@@ -28,15 +28,6 @@ $link = function (array $over) use ($cat_id, $q, $avail) {
 require __DIR__ . '/includes/header.php';
 ?>
 <h1>Products</h1>
-<form class="search-bar" method="get" role="search">
-  <?php if ($cat_id): ?><input type="hidden" name="category" value="<?= $cat_id ?>"><?php endif; ?>
-  <?php if ($avail): ?><input type="hidden" name="available" value="1"><?php endif; ?>
-  <label class="sr-only" for="product-search">Search equipment</label>
-  <input type="search" id="product-search" name="q" value="<?= e($q) ?>" placeholder="Search equipment...">
-  <button type="submit" aria-label="Search">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-  </button>
-</form>
 <div class="chips">
   <a class="chip <?= !$cat_id ? 'active' : '' ?>" href="<?= $link(['category' => 0]) ?>">All</a>
   <?php foreach ($categories as $c): ?>
