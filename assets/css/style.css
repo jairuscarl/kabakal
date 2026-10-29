@@ -209,6 +209,15 @@ input[type=number] { max-width: 110px; } textarea { min-height: 100px; resize: v
 
 .check { display: flex; gap: 8px; align-items: center; font-weight: 400; } .check input { width: auto; }
 .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; } .filter-bar input, .filter-bar select { width: auto; min-width: 180px; }
+/* products.php search: a centred pill with the magnifier button sitting inside its right edge. */
+.search-bar { position: relative; width: min(560px, 100%); margin: 0 auto 22px; }
+.search-bar input[type=search] { border-radius: 999px; padding: 12px 54px 12px 20px; background: var(--panel); border-width: 2px; }
+.search-bar button { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: var(--orange); color: #000; cursor: pointer; }
+.search-bar button:hover { background: var(--orange-dark); }
+/* "Available only" toggle: pushed to the end of the category chips, with a green tint when on. */
+.chip-toggle { margin-left: auto; border-style: dashed; }
+.chip-toggle.active { background: var(--green); border-color: var(--green); border-style: solid; }
 .help { color: var(--muted); font-size: .88rem; margin-top: 4px; }
 /* Password field with a show/hide (eye) button. Markup comes from pw_field() in includes/init.php,
    the click is handled in assets/js/main.js. The input gets right padding so text never runs
