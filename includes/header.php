@@ -35,7 +35,7 @@ $nav_icon = function ($name) {
 </head>
 <body>
 <header class="site-header">
-  <div class="container nav">
+  <div class="nav">
     <a class="brand brand-logo" href="<?= url('index.php') ?>"><img src="<?= url('assets/images/logo.png') ?>" alt="<?= e($shop_name) ?>" width="720" height="229"></a>
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">&#9776;</button>
     <nav class="nav-links" id="nav-links">
@@ -47,6 +47,14 @@ $nav_icon = function ($name) {
         <a href="<?= url('register.php') ?>" class="btn btn-sm"><?= $nav_icon('register') ?>Register</a>
       <?php endif; ?>
     </nav>
+    <?php /* Header search: always lands on the product list; keeps the typed word when already there. */ ?>
+    <form class="search-bar nav-search" action="<?= url('products.php') ?>" method="get" role="search">
+      <label class="sr-only" for="nav-search">Search products</label>
+      <input type="search" id="nav-search" name="q" value="<?= $current === 'products.php' ? e(trim($_GET['q'] ?? '')) : '' ?>" placeholder="Search equipment...">
+      <button type="submit" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+    </form>
     <?php /* Top-right of the bar: the cart icon first, then the "Welcome, <name>!" greeting (only after login) hard against the right edge; the badge is the item count. */ ?>
     <div class="nav-right">
     <span class="nav-icons">
