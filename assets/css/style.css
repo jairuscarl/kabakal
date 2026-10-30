@@ -5,6 +5,9 @@
   --white: #fff;     --muted: #a8a8a8;
   --green: #2ecc71;  --red: #ff4d4d;   --yellow: #f5c518; --blue: #4da3ff;
   --red-dark: #d93636;
+  /* Motion: shared timings + easing (docs/animation-plan.md) */
+  --t-fast: 150ms; --t-med: 250ms; --t-slow: 500ms;
+  --ease-snap: cubic-bezier(.22, 1, .36, 1);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -159,10 +162,12 @@ img, video { max-width: 100%; display: block; }
 }
 .hero-content { position: relative; z-index: 2; padding: 48px 0; max-width: 640px; margin-left: 250px; top: -90px;}
 .hero-content p { font-size: 1.15rem; color: #eee; margin-bottom: 24px; }
-.hero h1 span { color: var(--orange); }
+.hero h1 .hi-punch { color: var(--orange); }
 
 /* ---- Sections / grids ---- */
-.section { padding: 44px 0; } .section-title { border-left: 6px solid var(--orange); padding-left: 14px; margin-bottom: 24px; }
+.section { padding: 44px 0; } .section-title { position: relative; padding-left: 20px; margin-bottom: 24px; }
+/* the orange bar is its own element so it can "draw in" (Phase 1 animations) */
+.section-title::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--orange); transform-origin: top; }
 .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
 .chip { border: 2px solid var(--line); padding: 6px 16px; border-radius: 999px; color: var(--white); font-weight: 600; }
@@ -676,7 +681,12 @@ html.theme-light .site-header .nav-links { box-shadow: 0 12px 24px rgba(0,0,0,.1
 /* Home (dark theme): ONE backdrop - the page photo at full strength, only lightly shaded, and the banner
    drops its own copy of the photo so it is not shown twice; it keeps just the left-side shading for the headline.
    Light mode keeps the banner photo + the pale page backdrop. */
-html:not(.theme-light) body.home { background-image: linear-gradient(rgba(11,11,11,.25), rgba(11,11,11,.55)), url("../images/boxingkabakal.jpg"); }
+html:not(.theme-light) body.home { background-image: none; }
+/* the photo sits on its own fixed layer behind the page so Phase 1 can zoom it slowly */
+html:not(.theme-light) body.home::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(rgba(11,11,11,.25), rgba(11,11,11,.55)), url("../images/boxingkabakal.jpg") center top / cover no-repeat;
+  transform-origin: 70% 40%; }
+@media (max-width: 860px) { html:not(.theme-light) body.home::before { background-position: center, right top; } }
 html:not(.theme-light) body.home .hero { background-color: transparent;
   background-image: linear-gradient(90deg, rgba(11,11,11,.85) 6%, rgba(11,11,11,.45) 52%, rgba(11,11,11,0) 100%); }
 html.theme-light .hero { --white: #fff; --line: #333; --muted: #a8a8a8; --orange: #ffa600; --orange-dark: #d95a00; color: var(--white); }
@@ -694,3 +704,44 @@ html.theme-light .hero { --white: #fff; --line: #333; --muted: #a8a8a8; --orange
 .theme-swatch i:first-child { grid-column: 1 / -1; }
 .theme-swatch-dark { background: #0b0b0b; } .theme-swatch-dark i { background: #222; } .theme-swatch-dark i:first-child { background: #ffa600; }
 .theme-swatch-light { background: #f3f3f1; } .theme-swatch-light i { background: #fff; border: 1px solid #dadad6; } .theme-swatch-light i:first-child { background: #b05e00; border: 0; }
+
+/* ---- Phase 1 animations: home page (docs/animation-plan.md) ----
+   Only for visitors who have NOT asked their device for reduced motion; everyone else gets the static page.
+   html.intro (banner intro, once per visit) and html.reveal (scroll-in) are set by the inline script in index.php.
+   Only transform / opacity (and a short text-shadow glow) are animated. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Banner intro: "Build your" slides up, STRENGTH punches in with an orange glow, then line 2, text, button, icons */
+  html.intro .hero h1 :is(.hi-a, .hi-punch, .hi-dot, .hi-b) { display: inline-block; }
+  html.intro .hero .hi-a     { animation: kb-rise var(--t-slow) var(--ease-snap) both; }
+  html.intro .hero .hi-punch,
+  html.intro .hero .hi-dot   { animation: kb-punch 550ms var(--ease-snap) 300ms both; }
+  html.intro .hero .hi-b     { animation: kb-rise var(--t-slow) var(--ease-snap) 650ms both; }
+  html.intro .hero-content p { animation: kb-rise var(--t-slow) var(--ease-snap) 800ms both; }
+  html.intro .hero-cta .btn  { animation: kb-rise var(--t-slow) var(--ease-snap) 900ms both; }
+  html.intro .hero-social a  { animation: kb-rise var(--t-slow) var(--ease-snap) 1000ms both; }
+  html.intro .hero-social a:nth-child(2) { animation-delay: 1060ms; }
+  html.intro .hero-social a:nth-child(3) { animation-delay: 1120ms; }
+
+  /* Backdrop: a slow 6% push-in over 20 s, then it rests */
+  html:not(.theme-light) body.home::before { animation: kb-zoom 20s ease-out both; }
+
+  /* Scroll-in: each marked section's title bar draws down, its text and cards fade up in a 60 ms wave
+     (main.js adds .in and numbers the cards with --i) */
+  html.reveal [data-reveal] > :not(.grid, .video-grid),
+  html.reveal [data-reveal] :is(.grid, .video-grid) > * {
+    opacity: 0; transform: translateY(18px);
+    transition: opacity var(--t-slow) var(--ease-snap), transform var(--t-slow) var(--ease-snap);
+    transition-delay: calc(var(--i, 0) * 60ms);
+  }
+  html.reveal [data-reveal] .section-title::before { transform: scaleY(0); transition: transform var(--t-slow) var(--ease-snap) 150ms; }
+  html.reveal [data-reveal].in > :not(.grid, .video-grid),
+  html.reveal [data-reveal].in :is(.grid, .video-grid) > * { opacity: 1; transform: none; }
+  html.reveal [data-reveal].in .section-title::before { transform: none; }
+}
+@keyframes kb-rise  { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes kb-punch {
+  0%   { opacity: 0; transform: scale(1.6); }
+  60%  { opacity: 1; transform: scale(.94); text-shadow: 0 0 28px rgba(255,166,0,.9); }
+  100% { opacity: 1; transform: none; text-shadow: 0 0 0 rgba(255,166,0,0); }
+}
+@keyframes kb-zoom  { from { transform: scale(1); } to { transform: scale(1.06); } }

@@ -23,10 +23,14 @@ if (!$featured) {
 }
 require __DIR__ . '/includes/header.php';
 ?>
+<?php /* Animations (style.css "Phase 1 animations"): the banner intro plays once per visit (sessionStorage),
+   and sections marked data-reveal fade up as they scroll into view (assets/js/main.js). Set here, before
+   the banner is drawn, so nothing flashes; without JavaScript everything is simply shown. */ ?>
+<script>(function(){var d=document.documentElement;try{if(!sessionStorage.getItem('kb-intro')){d.classList.add('intro');sessionStorage.setItem('kb-intro','1');}}catch(e){}if('IntersectionObserver' in window)d.classList.add('reveal');})();</script>
 <section class="hero">
   <?php /* Backdrop is only the boxingkabakal.jpg photo (set in style.css .hero); promo videos stay in their own section below. */ ?>
   <div class="container hero-content">
-    <h1>Build your <span>strength</span>.<br>Build your gym.</h1>
+    <h1><span class="hi-a">Build your</span> <span class="hi-punch">strength</span><span class="hi-dot">.</span><br><span class="hi-b">Build your gym.</span></h1>
     <p>Boxing gear, gym equipment and machines for gym owners, athletes and home workouts.</p>
     <?php /* Call-to-action row: the Shop equipment button with the social icons (Facebook / Instagram /
              Google Maps) right beside it. Each icon prints only when its link is filled in Admin > Settings. */ ?>
@@ -68,7 +72,7 @@ require __DIR__ . '/includes/header.php';
   <?php show_flash(); ?>
 
   <?php if ($cats): ?>
-  <section class="section">
+  <section class="section" data-reveal>
     <h2 class="section-title">Shop by category</h2>
     <div class="grid">
       <?php foreach ($cats as $c): ?>
@@ -78,14 +82,14 @@ require __DIR__ . '/includes/header.php';
   </section>
   <?php endif; ?>
 
-  <section class="section">
+  <section class="section" data-reveal>
     <h2 class="section-title">Featured products</h2>
     <?php if (!$featured): ?><p class="muted">No products yet. Please check back soon.</p><?php endif; ?>
     <div class="grid"><?php foreach ($featured as $p) product_card($p); ?></div>
   </section>
 
   <?php if ($videos): ?>
-  <section class="section">
+  <section class="section" data-reveal>
     <h2 class="section-title">Watch Kabakal in action</h2>
     <div class="video-grid">
       <?php foreach ($videos as $v): ?>
@@ -108,7 +112,7 @@ require __DIR__ . '/includes/header.php';
   </section>
   <?php endif; ?>
 
-  <section class="section">
+  <section class="section" data-reveal>
     <h2 class="section-title">About Kabakal</h2>
     <p style="max-width:70ch"><?= e(setting('shop_about')) ?></p>
     <p class="muted">Visit us: <?= e(setting('shop_address')) ?> &nbsp;|&nbsp; <?= e(setting('shop_phone')) ?></p>

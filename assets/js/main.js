@@ -265,3 +265,18 @@ document.querySelectorAll('.flash').forEach(function (box) {
     setTimeout(function () { box.remove(); }, 500);
   }, 5000);
 });
+
+// Phase 1 animations (home page): sections marked data-reveal fade up when they scroll into view.
+// index.php only turns this on (html.reveal) when the browser has IntersectionObserver.
+if (document.documentElement.classList.contains('reveal')) {
+  var revealer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('in'); revealer.unobserve(en.target); }
+    });
+  }, { rootMargin: '0px 0px -10% 0px' });
+  document.querySelectorAll('[data-reveal]').forEach(function (section) {
+    // number the cards so CSS can stagger them (60 ms apart, capped so long grids do not lag)
+    section.querySelectorAll('.grid > *, .video-grid > *').forEach(function (card, i) { card.style.setProperty('--i', Math.min(i, 8)); });
+    revealer.observe(section);
+  });
+}

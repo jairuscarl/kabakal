@@ -1,6 +1,6 @@
 # Animation plan - Kabakal Fitness Equipment
 
-Planned 2026-10-30. Not built yet; work through it one phase per commit.
+Planned 2026-10-30. Work through it one phase per commit. Phase 1 built 2026-10-30.
 
 **Feel:** gym energy - quick, punchy movement that lands with a short orange glow, not slow floaty fades.
 **Where:** `assets/css/style.css` plus about 40 lines in `assets/js/main.js`. No new libraries.
@@ -18,9 +18,9 @@ Planned 2026-10-30. Not built yet; work through it one phase per commit.
 
 ## Phase 1 - Home page first impression
 
-- [ ] **Banner intro.** "BUILD YOUR" slides up, then STRENGTH lands with a quick scale-down and an orange glow. Subtitle, Shop button and social icons fade in one after another. About 1 s in total, once per visit.
-- [ ] **Slow zoom on the background photo.** About 5% over 20 s, so the page feels alive without distracting.
-- [ ] **Sections appear on scroll.** Category tiles and product cards fade up in a quick wave, 60 ms apart (small IntersectionObserver helper in `main.js`). The orange bar beside each section title draws in from the top.
+- [x] **Banner intro.** "BUILD YOUR" slides up, then STRENGTH lands with a quick scale-down and an orange glow. Subtitle, Shop button and social icons fade in one after another. About 1 s in total, once per visit.
+- [x] **Slow zoom on the background photo.** About 5% over 20 s, so the page feels alive without distracting.
+- [x] **Sections appear on scroll.** Category tiles and product cards fade up in a quick wave, 60 ms apart (small IntersectionObserver helper in `main.js`). The orange bar beside each section title draws in from the top.
 
 ## Phase 2 - Shopping interactions
 
