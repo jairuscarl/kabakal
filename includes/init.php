@@ -314,11 +314,14 @@ function avatar_html($path, $name, $size = 36) {
     return '<span class="avatar avatar-letter" aria-hidden="true" style="' . $style . '">' . e($letter) . '</span>';
 }
 
-/** The shopping-cart icon (same drawing as the cart in the navbar). */
-function icon_cart($size = 22) {
+/** "Add to cart" icon: the navbar's cart drawing, scaled down a little and moved down-left to make room
+    for a large + in the top-right corner (used on the add-to-cart buttons). */
+function icon_cart_plus($size = 22) {
     return '<svg viewBox="0 0 24 24" width="' . (int)$size . '" height="' . (int)$size . '" fill="none" stroke="currentColor" stroke-width="2" '
-         . 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="21" r="1"/>'
-         . '<circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+         . 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+         . '<g transform="translate(-1 2.5) scale(.9)"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>'
+         . '<path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></g>'
+         . '<path d="M18.5 .5v6M15.5 3.5h6"/></svg>';
 }
 
 /** Admin light/dark mode: put in <head> so the saved choice is applied before the page is drawn (no white flash).
@@ -347,7 +350,7 @@ function buy_buttons($p, $qty_field = false) {
     }
     return $html
          . '<button class="btn btn-outline btn-icon" type="submit" name="action" value="add" title="Add to cart" aria-label="Add to cart">'
-         . icon_cart($qty_field ? 24 : 20) . '</button>'
+         . icon_cart_plus($qty_field ? 24 : 20) . '</button>'
          . '<button class="btn' . ($qty_field ? '' : ' btn-sm') . ' btn-buy" type="submit" name="action" value="buy_now">Buy now</button></form>';
 }
 
