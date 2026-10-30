@@ -79,7 +79,7 @@ require __DIR__ . '/includes/header.php';
   </div>
   <aside class="summary">
     <h3>Order summary</h3>
-    <div class="row total"><span>Total</span><span><?= peso($total) ?></span></div>
+    <div class="row total"><span>Total</span><span data-count-peso="<?= e(number_format($total, 2, '.', '')) ?>"><?= peso($total) ?></span></div>
     <?php if (is_logged_in()): ?>
       <a class="btn btn-block" href="<?= url('checkout.php') ?>">Proceed to checkout</a>
     <?php else: ?>

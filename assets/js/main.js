@@ -266,8 +266,8 @@ document.querySelectorAll('.flash').forEach(function (box) {
   }, 5000);
 });
 
-// Phase 1 animations (home page): sections marked data-reveal fade up when they scroll into view.
-// index.php only turns this on (html.reveal) when the browser has IntersectionObserver.
+// Animations: anything marked data-reveal fades up when it scrolls into view.
+// includes/header.php only turns this on (html.reveal) when the browser has IntersectionObserver.
 if (document.documentElement.classList.contains('reveal')) {
   var revealer = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
@@ -280,3 +280,103 @@ if (document.documentElement.classList.contains('reveal')) {
     revealer.observe(section);
   });
 }
+
+// ---- Phase 2 animations: shopping (docs/animation-plan.md). Each one only delays the normal
+// form submit / link by a fraction of a second; with reduced motion they are all skipped. ----
+var reduceMotion = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+                   || document.body.classList.contains('admin-theme');   // the admin panel stays calm
+var cartIcon = document.querySelector('.site-header .nav-cart:not(.nav-mail)');
+// Run fn when the animation ends - or after ms anyway, in case the browser never reports the end
+// (e.g. a background tab), so the cart form / link always goes through.
+function afterAnimation(anim, ms, fn) {
+  var done = false, run = function () { if (!done) { done = true; fn(); } };
+  anim.onfinish = run;
+  setTimeout(run, ms + 150);
+}
+
+// Add to cart: the product photo flies to the cart icon, then the form is sent as usual.
+// The cart count bounces on the next page (flag kept in sessionStorage).
+document.querySelectorAll('form.buy-row').forEach(function (form) {
+  form.addEventListener('submit', function (ev) {
+    var btn = ev.submitter;
+    if (!btn || btn.value !== 'add') return;
+    try { sessionStorage.setItem('kb-cart-bump', '1'); } catch (e) {}
+    var card = form.closest('.card');
+    var img = card ? card.querySelector('img') : document.querySelector('.gallery-slide[aria-hidden="false"] img, .detail img');
+    if (reduceMotion || !cartIcon || !img || !img.animate) return;
+    ev.preventDefault();
+    var a = img.getBoundingClientRect(), b = cartIcon.getBoundingClientRect();
+    var fly = img.cloneNode();
+    fly.className = 'fly-img';
+    fly.removeAttribute('loading');
+    fly.style.cssText = 'left:' + a.left + 'px;top:' + a.top + 'px;width:' + a.width + 'px;height:' + a.height + 'px';
+    document.body.appendChild(fly);
+    var dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+    afterAnimation(fly.animate([
+      { transform: 'none', opacity: 1 },
+      { transform: 'translate(' + dx * 0.45 + 'px,' + (dy * 0.45 - 70) + 'px) scale(.5)', opacity: 1, offset: 0.45 },   // arc upwards
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.06)', opacity: 0.5 }
+    ], { duration: 650, easing: 'cubic-bezier(.45,0,.55,1)', fill: 'forwards' }), 650, function () {
+      var action = document.createElement('input');
+      action.type = 'hidden'; action.name = 'action'; action.value = 'add';   // form.submit() does not send the clicked button
+      form.appendChild(action);
+      form.submit();
+    });
+  });
+});
+(function () {
+  var bump = null;
+  try { bump = sessionStorage.getItem('kb-cart-bump'); sessionStorage.removeItem('kb-cart-bump'); } catch (e) {}
+  var badge = cartIcon && cartIcon.querySelector('.cart-badge');
+  if (bump && badge && !reduceMotion) badge.classList.add('bump');
+})();
+
+// Category chips: the orange fill slides from the current chip to the clicked one, then the page changes.
+document.querySelectorAll('.chips').forEach(function (row) {
+  row.addEventListener('click', function (ev) {
+    var to = ev.target.closest('.chip'), from = row.querySelector('.chip.active:not(.chip-toggle)');
+    if (reduceMotion || !to || !from || to === from || to.classList.contains('chip-toggle') || !document.body.animate
+        || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;
+    ev.preventDefault();
+    var r = row.getBoundingClientRect(), a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+    var pill = document.createElement('span');
+    pill.className = 'chip-slide';
+    pill.style.cssText = 'left:' + (a.left - r.left) + 'px;top:' + (a.top - r.top) + 'px;width:' + a.width + 'px;height:' + a.height + 'px';
+    row.appendChild(pill);
+    from.classList.remove('active');
+    afterAnimation(pill.animate([{ transform: 'none' }, { transform: 'translate(' + (b.left - a.left) + 'px,' + (b.top - a.top) + 'px) scaleX(' + b.width / a.width + ')' }],
+                                { duration: 250, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' }), 250, function () {
+      to.classList.add('active');
+      location.href = to.href;
+    });
+  });
+});
+
+// Cart page: a removed row slides out, then the form is sent.
+document.querySelectorAll('form.inline-form input[name="action"][value="remove"]').forEach(function (field) {
+  var form = field.form, row = form.closest('tr');
+  form.addEventListener('submit', function (ev) {
+    if (reduceMotion || !row) return;
+    ev.preventDefault();
+    row.classList.add('row-out');
+    setTimeout(function () { form.submit(); }, 260);
+  });
+});
+
+// Cart page: the total counts from the last total this visitor saw to the new one.
+(function () {
+  var el = document.querySelector('[data-count-peso]');
+  if (!el) return;
+  var now = parseFloat(el.getAttribute('data-count-peso')), before = NaN;
+  try { before = parseFloat(sessionStorage.getItem('kb-cart-total')); sessionStorage.setItem('kb-cart-total', now); } catch (e) {}
+  if (reduceMotion || isNaN(before) || before === now) return;
+  var fmt = function (v) { return '₱' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var start = null;
+  el.textContent = fmt(before);
+  requestAnimationFrame(function step(t) {
+    start = start || t;
+    var k = Math.min((t - start) / 500, 1);
+    el.textContent = fmt(before + (now - before) * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(step);
+  });
+})();

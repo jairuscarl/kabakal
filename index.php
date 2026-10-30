@@ -23,10 +23,9 @@ if (!$featured) {
 }
 require __DIR__ . '/includes/header.php';
 ?>
-<?php /* Animations (style.css "Phase 1 animations"): the banner intro plays once per visit (sessionStorage),
-   and sections marked data-reveal fade up as they scroll into view (assets/js/main.js). Set here, before
-   the banner is drawn, so nothing flashes; without JavaScript everything is simply shown. */ ?>
-<script>(function(){var d=document.documentElement;try{if(!sessionStorage.getItem('kb-intro')){d.classList.add('intro');sessionStorage.setItem('kb-intro','1');}}catch(e){}if('IntersectionObserver' in window)d.classList.add('reveal');})();</script>
+<?php /* Banner intro animation (style.css "Phase 1 animations") plays once per visit (sessionStorage). Set here,
+   before the banner is drawn, so nothing flashes; without JavaScript the banner is simply shown. */ ?>
+<script>(function(){try{if(!sessionStorage.getItem('kb-intro')){document.documentElement.classList.add('intro');sessionStorage.setItem('kb-intro','1');}}catch(e){}})();</script>
 <section class="hero">
   <?php /* Backdrop is only the boxingkabakal.jpg photo (set in style.css .hero); promo videos stay in their own section below. */ ?>
   <div class="container hero-content">

@@ -1,6 +1,6 @@
 # Animation plan - Kabakal Fitness Equipment
 
-Planned 2026-10-30. Work through it one phase per commit. Phase 1 built 2026-10-30.
+Planned 2026-10-30. Work through it one phase per commit. Phases 1 and 2 built 2026-10-30.
 
 **Feel:** gym energy - quick, punchy movement that lands with a short orange glow, not slow floaty fades.
 **Where:** `assets/css/style.css` plus about 40 lines in `assets/js/main.js`. No new libraries.
@@ -24,11 +24,11 @@ Planned 2026-10-30. Work through it one phase per commit. Phase 1 built 2026-10-
 
 ## Phase 2 - Shopping interactions
 
-- [ ] **Product cards.** On hover: lift 4 px, photo zooms slightly inside its frame, border turns orange. Buy Now presses down a little when clicked.
-- [ ] **Add to cart.** The card photo shrinks and flies to the header cart icon; the cart count bounces and flashes orange (~25 lines of JS).
-- [ ] **Filter chips.** The active chip's orange fill slides to the newly picked chip; product cards fade in again in a quick wave.
-- [ ] **Header search.** Widens slightly on focus; the orange button shrinks a little when pressed.
-- [ ] **Cart page.** A removed row collapses and fades out; the total counts up or down to the new amount.
+- [x] **Product cards.** On hover: lift 4 px, photo zooms slightly inside its frame, border turns orange. Buy Now presses down a little when clicked.
+- [x] **Add to cart.** The card photo shrinks and flies to the header cart icon; the cart count bounces and flashes orange (~25 lines of JS).
+- [x] **Filter chips.** The active chip's orange fill slides to the newly picked chip; product cards fade in again in a quick wave.
+- [x] **Header search.** Widens slightly on focus; the orange button shrinks a little when pressed.
+- [x] **Cart page.** A removed row collapses and fades out; the total counts up or down to the new amount.
 
 ## Phase 3 - Feedback and status
 

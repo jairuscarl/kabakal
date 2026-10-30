@@ -38,6 +38,6 @@ require __DIR__ . '/includes/header.php';
 <?php if (!$products): ?>
   <p class="empty">No products found. Try another category or search word<?= $avail ? ', or show out-of-stock items too' : '' ?>.</p>
 <?php else: ?>
-  <div class="grid"><?php foreach ($products as $p) product_card($p); ?></div>
+  <div class="grid" data-reveal><?php foreach ($products as $p) product_card($p); ?></div>
 <?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

@@ -35,6 +35,9 @@ $nav_icon = function ($name) {
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="<?= url('assets/images/favicon.png') ?>">
   <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
+  <?php /* Animations: elements marked data-reveal fade up as they scroll into view (main.js). Only turned on
+     when the browser can detect that; set in <head> so nothing flashes. */ ?>
+  <script>if ('IntersectionObserver' in window) document.documentElement.classList.add('reveal');</script>
 </head>
 <body<?= !empty($body_class) ? ' class="' . e($body_class) . '"' : '' ?>>
 <header class="site-header">

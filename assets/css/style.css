@@ -745,3 +745,39 @@ html.theme-light .hero { --white: #fff; --line: #333; --muted: #a8a8a8; --orange
   100% { opacity: 1; transform: none; text-shadow: 0 0 0 rgba(255,166,0,0); }
 }
 @keyframes kb-zoom  { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+/* ---- Phase 2 animations: shopping (docs/animation-plan.md) ----
+   Shop pages only (the admin panel stays calm), skipped when the device asks for reduced motion.
+   The flying cart photo, chip slide, row removal and total count-up are driven by assets/js/main.js. */
+.card > a:first-child { display: block; overflow: hidden; }   /* frame for the photo zoom */
+.fly-img { position: fixed; z-index: 100; object-fit: cover; border-radius: 8px; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.chips { position: relative; }
+.chip { position: relative; z-index: 1; }
+.chip-slide { position: absolute; z-index: 0; border-radius: 999px; background: var(--orange); transform-origin: left center; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Product cards: lift, photo zooms inside its frame, orange border */
+  .card { transition: transform var(--t-med) var(--ease-snap), border-color var(--t-med), box-shadow var(--t-med); }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,.35); }
+  .card img { transition: transform var(--t-slow) var(--ease-snap); }
+  .card:hover img { transform: scale(1.06); }
+  /* Buttons press down a little (shop only) */
+  body:not(.admin-theme) .btn { transition: transform var(--t-fast) var(--ease-snap), background-color var(--t-fast), border-color var(--t-fast); }
+  body:not(.admin-theme) .btn:active { transform: scale(.96); }
+  /* Header search: widens a little when you click into it; its button presses in */
+  .site-header .nav-search { transition: flex-basis var(--t-med) var(--ease-snap); }
+  .site-header .nav-search button { transition: transform var(--t-fast) var(--ease-snap), background-color var(--t-fast); }
+  .site-header .nav-search button:active { transform: translateY(-50%) scale(.85); }
+  /* Cart count: bounces + flashes once after an item was added (main.js adds .bump) */
+  .nav-cart .cart-badge.bump { animation: kb-bump 600ms var(--ease-snap); }
+  /* Cart page: a removed row slides out before the page reloads */
+  tr.row-out { opacity: 0; transform: translateX(40px); transition: opacity 250ms ease, transform 250ms ease; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 861px) {
+  .site-header .nav-search:focus-within { flex-basis: 540px; }
+}
+@keyframes kb-bump {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.6); background: #fff; }
+  65%  { transform: scale(.9); }
+  100% { transform: scale(1); }
+}
