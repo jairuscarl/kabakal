@@ -1,6 +1,6 @@
 # Animation plan - Kabakal Fitness Equipment
 
-Planned 2026-10-30. Work through it one phase per commit. Phases 1-3 built 2026-10-30.
+Planned 2026-10-30. Work through it one phase per commit. All four phases built 2026-10-30.
 
 **Feel:** gym energy - quick, punchy movement that lands with a short orange glow, not slow floaty fades.
 **Where:** `assets/css/style.css` plus about 40 lines in `assets/js/main.js`. No new libraries.
@@ -39,7 +39,7 @@ Planned 2026-10-30. Work through it one phase per commit. Phases 1-3 built 2026-
 
 ## Phase 4 - Admin (small touches only)
 
-- [ ] **Dashboard.** Sales bars grow up from the bottom when the chart comes into view; the numbers in the stat boxes count up from 0.
+- [x] **Dashboard.** Sales bars grow up from the bottom when the chart comes into view; the numbers in the stat boxes count up from 0.
 
 ## Avoid
 

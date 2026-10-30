@@ -384,3 +384,34 @@ document.querySelectorAll('form.inline-form input[name="action"][value="remove"]
     if (k < 1) requestAnimationFrame(step);
   });
 })();
+
+// ---- Phase 4 animations: admin dashboard (docs/animation-plan.md). Only reduced motion turns these off. ----
+(function () {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Sales chart: bars grow up from the bottom once the chart is on screen
+  var chart = document.querySelector('.sales-chart');
+  if (chart && 'IntersectionObserver' in window) {
+    chart.querySelectorAll('.sc-bar').forEach(function (bar, i) { bar.style.setProperty('--i', i); });
+    chart.classList.add('sc-ready');
+    var seen = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) { chart.classList.add('in'); seen.disconnect(); }
+    }, { threshold: 0.3 });
+    seen.observe(chart);
+  }
+  // Stat boxes: numbers ("121", "₱10,750.00") count up from 0, keeping their peso sign and decimals
+  document.querySelectorAll('.admin-theme .stat b').forEach(function (el) {
+    var m = el.textContent.trim().match(/^(\D*)([\d,]+(?:\.(\d+))?)$/);
+    if (!m) return;
+    var prefix = m[1], target = parseFloat(m[2].replace(/,/g, '')), decimals = m[3] ? m[3].length : 0;
+    if (!target) return;
+    var fmt = function (v) { return prefix + v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); };
+    var start = null;
+    el.textContent = fmt(0);
+    requestAnimationFrame(function step(t) {
+      start = start || t;
+      var k = Math.min((t - start) / 900, 1);
+      el.textContent = fmt(target * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step); else el.textContent = fmt(target);
+    });
+  });
+})();

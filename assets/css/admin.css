@@ -269,3 +269,13 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
   .sales-chart { padding-left: 64px; } .sc-table { margin-left: -44px; }
   .sc-months span { font-size: .65rem; } .sc-months small { display: none; }
 }
+
+/* ---- Phase 4 animations: dashboard (docs/animation-plan.md) ----
+   main.js adds .sc-ready to the chart, then .in once it scrolls into view; the bars grow up from the
+   bottom one after another (--i) and the peak label fades in after. Skipped with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .sales-chart.sc-ready .sc-bar { transform: scaleY(0); transform-origin: bottom; transition: transform 600ms cubic-bezier(.22, 1, .36, 1); transition-delay: calc(var(--i, 0) * 50ms); }
+  .sales-chart.sc-ready .sc-value { opacity: 0; transition: opacity 300ms ease 900ms; }
+  .sales-chart.sc-ready.in .sc-bar { transform: none; }
+  .sales-chart.sc-ready.in .sc-value { opacity: 1; }
+}
