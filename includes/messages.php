@@ -28,7 +28,7 @@ function message_add($conversation_id, $sender, $body, $admin_id = null) {
 /** One conversation with its customer and product name. */
 function conversation_get($id) {
     global $pdo;
-    $st = $pdo->prepare('SELECT cv.*, c.full_name, c.email, e.name AS equipment_name, e.image_url
+    $st = $pdo->prepare('SELECT cv.*, c.full_name, c.email, c.avatar_url, e.name AS equipment_name, e.image_url
                          FROM conversation cv JOIN customer c ON c.customer_id = cv.customer_id
                          LEFT JOIN equipment e ON e.equipment_id = cv.equipment_id
                          WHERE cv.conversation_id = ?');

@@ -279,3 +279,25 @@ html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
   .sales-chart.sc-ready.in .sc-bar { transform: none; }
   .sales-chart.sc-ready.in .sc-value { opacity: 1; }
 }
+
+/* ---- Admin > Messages list (admin/messages.php) ----
+   Rows are clickable via the shared .conv-item / .conv-open pattern in style.css; the row needs
+   position:relative for the stretched link. The ⋮ menu (a <details>) is placed by main.js with
+   position:fixed so the scrolling .table-wrap never cuts it off. */
+.conv-table tr.conv-item { position: relative; }
+.conv-table .conv-open { color: var(--white); }
+.conv-who { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.chat-head .avatar { flex: none; }
+.row-menu summary { list-style: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; color: var(--muted); }
+.row-menu summary::-webkit-details-marker { display: none; }
+.row-menu summary:hover, .row-menu[open] summary { background: var(--panel-2); color: var(--white); }
+.row-menu summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.row-menu-list { position: fixed; z-index: 70; min-width: 170px; padding: 6px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(16, 24, 40, .14); display: grid; gap: 2px; }
+.row-menu-list form { margin: 0; }
+.row-menu-list a, .row-menu-list button { display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: none;
+  color: var(--white); font: inherit; font-size: .9rem; text-align: left; cursor: pointer; text-decoration: none; }
+.row-menu-list a:hover, .row-menu-list button:hover { background: var(--panel-2); text-decoration: none; }
+.row-menu-list .danger { color: var(--red); }
+/* every row's ⋮ cell is its own layer (.conv-inner): lift the one whose menu is open above the rows below it */
+.conv-table .conv-inner:has(.row-menu[open]) { z-index: 5; }

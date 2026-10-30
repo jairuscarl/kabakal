@@ -415,3 +415,27 @@ document.querySelectorAll('form.inline-form input[name="action"][value="remove"]
     });
   });
 })();
+
+// Admin > Messages: the ⋮ row menu. It is placed with position:fixed under its button so the
+// scrolling table never clips it; only one is open at a time, and a click elsewhere,
+// Esc, scrolling or resizing closes it.
+(function () {
+  var menus = document.querySelectorAll('details.row-menu');
+  if (!menus.length) return;
+  var closeAll = function (except) { menus.forEach(function (d) { if (d !== except) d.open = false; }); };
+  menus.forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      closeAll(d);
+      var r = d.querySelector('summary').getBoundingClientRect(), list = d.querySelector('.row-menu-list');
+      list.style.right = (window.innerWidth - r.right) + 'px';
+      list.style.top = (r.bottom + 4) + 'px';
+      // not enough room below: open upwards instead
+      if (r.bottom + 4 + list.offsetHeight > window.innerHeight) list.style.top = (r.top - 4 - list.offsetHeight) + 'px';
+    });
+  });
+  document.addEventListener('click', function (ev) { if (!ev.target.closest('details.row-menu')) closeAll(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAll(); });
+  window.addEventListener('scroll', function () { closeAll(); }, true);
+  window.addEventListener('resize', function () { closeAll(); });
+})();
