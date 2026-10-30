@@ -169,7 +169,9 @@ function flash($type, $msg) { $_SESSION['flash'][] = [$type, $msg]; }
 /** Print and clear the stored messages. */
 function show_flash() {
     foreach ($_SESSION['flash'] ?? [] as [$type, $msg]) {
-        echo '<div class="alert alert-' . e($type) . ' flash" role="status">' . e($msg) . '</div>'; // .flash: main.js hides it after 5 s
+        // .flash: main.js hides it after 5 s, or straight away when the X is clicked
+        echo '<div class="alert alert-' . e($type) . ' flash" role="status">' . e($msg)
+           . '<button type="button" class="alert-close" aria-label="Close message" title="Close">&times;</button></div>';
     }
     unset($_SESSION['flash']);
 }

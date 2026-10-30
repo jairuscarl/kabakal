@@ -65,7 +65,7 @@ require __DIR__ . '/includes/header.php';
       <p class="muted track-items"><?= e(implode(', ', $names[$o['order_id']] ?? [])) ?></p>
       <ol class="track-steps">
         <?php $n = 0; foreach ($o_steps as $key => $label): ?>
-          <li class="<?= $n < $at ? 'done' : ($n === $at ? 'current' : '') ?>">
+          <li class="<?= $n < $at ? 'done' : ($n === $at ? 'current' : '') ?>" style="--i: <?= $n ?>"><?php /* --i: step order for the fill animation */ ?>
             <svg class="track-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><?= $step_icons[$key] ?></svg>
             <span class="track-dot"></span><?= e($label) ?></li>
         <?php $n++; endforeach; ?>

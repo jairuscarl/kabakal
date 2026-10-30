@@ -138,6 +138,11 @@ img, video { max-width: 100%; display: block; }
 .alert-success { border-color: var(--green); } .alert-error { border-color: var(--red); } .alert-info { border-color: var(--blue); }
 /* One-time messages (show_flash) fade out after 5 s; main.js adds .flash-hide, then removes the box. */
 .flash { transition: opacity .5s ease; } .flash.flash-hide { opacity: 0; }
+/* X on one-time messages (show_flash): closes it straight away */
+.alert.flash { padding-right: 48px; }
+.alert-close { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); width: 32px; height: 32px; display: grid; place-items: center;
+  border: 0; border-radius: 6px; background: none; color: var(--muted); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.alert-close:hover, .alert-close:focus-visible { color: var(--white); background: var(--panel-2); }
 .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: #444; color: #fff; white-space: nowrap; }
 .badge-paid, .badge-delivered, .badge-available, .badge-active, .badge-verified { background: var(--green); color: #000; }
 .badge-pending, .badge-pending-verification, .badge-reserved, .badge-partially-paid { background: var(--yellow); color: #000; }
@@ -781,3 +786,57 @@ html.theme-light .hero { --white: #fff; --line: #333; --muted: #a8a8a8; --orange
   65%  { transform: scale(.9); }
   100% { transform: scale(1); }
 }
+
+/* ---- Phase 3 animations: feedback and status (docs/animation-plan.md) ----
+   Static parts first (they also apply with reduced motion), then the motion itself. */
+/* Shop hamburger drawn as three bars (includes/header.php) so it can turn into an X when the menu is open */
+.site-header .nav-toggle { position: relative; width: 44px; height: 38px; padding: 0; }
+.site-header .nav-toggle .bar { position: absolute; left: 11px; right: 11px; height: 2px; border-radius: 2px; background: currentColor; }
+.site-header .nav-toggle .bar:nth-child(1) { top: 11px; } .site-header .nav-toggle .bar:nth-child(2) { top: 17px; } .site-header .nav-toggle .bar:nth-child(3) { top: 23px; }
+.site-header .nav-toggle[aria-expanded="true"] .bar:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.site-header .nav-toggle[aria-expanded="true"] .bar:nth-child(2) { opacity: 0; }
+.site-header .nav-toggle[aria-expanded="true"] .bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+/* One-time messages: a thin orange bar along the bottom shows the 5 seconds before they fade (main.js) */
+.alert.flash { position: relative; overflow: hidden; }
+.alert.flash::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--orange); transform-origin: left; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-header .nav-toggle .bar { transition: transform var(--t-med) var(--ease-snap), opacity var(--t-fast); }
+  /* Phone menu: drops down, then the links follow one after another */
+  .site-header .nav-links.open { animation: kb-drop var(--t-med) var(--ease-snap) both; }
+  .site-header .nav-links.open a { animation: kb-rise-sm var(--t-med) var(--ease-snap) both; }
+  .site-header .nav-links.open .nav-main a:nth-child(2) { animation-delay: 40ms; }
+  .site-header .nav-links.open .nav-main a:nth-child(3) { animation-delay: 80ms; }
+  .site-header .nav-links.open .nav-auth a:nth-child(1) { animation-delay: 120ms; }
+  .site-header .nav-links.open .nav-auth a:nth-child(2) { animation-delay: 160ms; }
+
+  /* Messages slide in from the top; the bar shrinks over the 5 s they stay */
+  .alert.flash { animation: kb-drop 300ms var(--ease-snap) both; }
+  .alert.flash::after { animation: kb-shrink 5s linear both; }
+
+  /* Order progress tracker (notifications.php gives each step --i): the green line fills step by step,
+     each reached icon / dot pops in turn, and the current step's dot keeps a soft pulse */
+  .track-steps li.done::before, .track-steps li.current::before { transform-origin: left; animation: kb-fill 300ms ease-out both; animation-delay: calc(var(--i) * 220ms - 120ms); }
+  .track-steps li.done .track-icon, .track-steps li.current .track-icon,
+  .track-steps li.done .track-dot, .track-steps li.current .track-dot { animation: kb-pop 350ms var(--ease-snap) both; animation-delay: calc(var(--i) * 220ms + 80ms); }
+  .track-steps li.current .track-dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--green);
+    animation: kb-pulse 1.8s ease-out infinite; animation-delay: calc(var(--i) * 220ms + 400ms); opacity: 0; }
+
+  /* Product gallery: photos fade while they slide; fullscreen views zoom open */
+  .gallery-track { transition: transform 400ms var(--ease-snap); }
+  .gallery-slide { transition: opacity 400ms ease; }
+  .gallery-slide[aria-hidden="true"] { opacity: 0; }
+  .gallery-stage.is-fullscreen .gallery-slide[aria-hidden="true"] { opacity: 0; }
+  .gallery-stage.is-fullscreen { animation: kb-zoom-open 280ms var(--ease-snap) both; }
+  .lightbox { animation: kb-fade var(--t-med) ease both; }
+  .lightbox img { animation: kb-zoom-open 280ms var(--ease-snap) both; }
+}
+@media (prefers-reduced-motion: reduce) { .alert.flash::after { display: none; } }
+@keyframes kb-drop      { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+@keyframes kb-rise-sm   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes kb-shrink    { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes kb-fill      { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes kb-pop       { 0% { transform: translateX(-50%) scale(.4); opacity: 0; } 70% { transform: translateX(-50%) scale(1.2); opacity: 1; } 100% { transform: translateX(-50%) scale(1); } }
+@keyframes kb-pulse     { 0% { transform: scale(.8); opacity: .8; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes kb-zoom-open { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes kb-fade      { from { opacity: 0; } to { opacity: 1; } }

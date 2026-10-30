@@ -258,12 +258,16 @@ document.querySelectorAll('[data-print]').forEach(function (btn) {
   btn.addEventListener('click', function () { window.print(); });
 });
 
-// One-time messages ("You have been logged out." etc.) fade out after 5 seconds
+// One-time messages ("You have been logged out." etc.) fade out after 5 seconds, or at once via their X
 document.querySelectorAll('.flash').forEach(function (box) {
-  setTimeout(function () {
+  var hide = function () {
+    if (box.classList.contains('flash-hide')) return;
     box.classList.add('flash-hide');
     setTimeout(function () { box.remove(); }, 500);
-  }, 5000);
+  };
+  setTimeout(hide, 5000);
+  var x = box.querySelector('.alert-close');
+  if (x) x.addEventListener('click', hide);
 });
 
 // Animations: anything marked data-reveal fades up when it scrolls into view.

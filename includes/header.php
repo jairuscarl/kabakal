@@ -43,7 +43,7 @@ $nav_icon = function ($name) {
 <header class="site-header">
   <div class="nav">
     <a class="brand brand-logo" href="<?= url('index.php') ?>"><img src="<?= url('assets/images/logo.png') ?>" alt="<?= e($shop_name) ?>" width="720" height="229"></a>
-    <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">&#9776;</button>
+    <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button>
     <nav class="nav-links" id="nav-links">
       <?php /* Desktop: .nav-main sits after the logo and .nav-auth is moved (CSS order) to the far right, just before the cart; on phones both just stack inside the menu. */ ?>
       <span class="nav-main">

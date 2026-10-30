@@ -1,6 +1,6 @@
 # Animation plan - Kabakal Fitness Equipment
 
-Planned 2026-10-30. Work through it one phase per commit. Phases 1 and 2 built 2026-10-30.
+Planned 2026-10-30. Work through it one phase per commit. Phases 1-3 built 2026-10-30.
 
 **Feel:** gym energy - quick, punchy movement that lands with a short orange glow, not slow floaty fades.
 **Where:** `assets/css/style.css` plus about 40 lines in `assets/js/main.js`. No new libraries.
@@ -32,10 +32,10 @@ Planned 2026-10-30. Work through it one phase per commit. Phases 1 and 2 built 2
 
 ## Phase 3 - Feedback and status
 
-- [ ] **Messages** (e.g. "You have been logged out."): slide in from the top with a thin orange bar underneath that shrinks over the 5 seconds before they disappear.
-- [ ] **Order progress tracker.** The green line fills step by step on load, each icon pops as it is reached, the current step pulses softly.
-- [ ] **Phone menu.** Slides down instead of appearing instantly, links fade in one after another, the hamburger icon turns into an X.
-- [ ] **Product photo gallery.** Photos crossfade instead of jumping; the full-screen view zooms open from the thumbnail.
+- [x] **Messages** (e.g. "You have been logged out."): slide in from the top with a thin orange bar underneath that shrinks over the 5 seconds before they disappear.
+- [x] **Order progress tracker.** The green line fills step by step on load, each icon pops as it is reached, the current step pulses softly.
+- [x] **Phone menu.** Slides down instead of appearing instantly, links fade in one after another, the hamburger icon turns into an X.
+- [x] **Product photo gallery.** Photos crossfade instead of jumping; the full-screen view zooms open from the thumbnail.
 
 ## Phase 4 - Admin (small touches only)
 
