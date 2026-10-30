@@ -36,7 +36,7 @@ $nav_icon = function ($name) {
   <link rel="icon" type="image/png" href="<?= url('assets/images/favicon.png') ?>">
   <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
 </head>
-<body>
+<body<?= !empty($body_class) ? ' class="' . e($body_class) . '"' : '' ?>>
 <header class="site-header">
   <div class="nav">
     <a class="brand brand-logo" href="<?= url('index.php') ?>"><img src="<?= url('assets/images/logo.png') ?>" alt="<?= e($shop_name) ?>" width="720" height="229"></a>

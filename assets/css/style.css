@@ -10,12 +10,13 @@
 html { scroll-behavior: smooth; }
 body {
   margin: 0; color: var(--white); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  /* Gym photo (assets/images/kabakal_bg.jpg) darkened ~90% and pinned in place, so every page
-     shares the same low-brightness backdrop. Cards, panels and tables stay opaque on top of it. */
+  /* The boxing photo (assets/images/boxingkabakal.jpg, also the Home banner) is the backdrop of
+     every page, dimmed ~85% and pinned in place so text stays readable on top of it. The Home
+     banner shows the same photo at full strength. Cards, panels and tables stay opaque on top. */
   background-color: var(--black);
   background-image:
-    linear-gradient(rgba(11,11,11,.90), rgba(11,11,11,.95)),
-    url("../images/kabakal_bg.jpg");
+    linear-gradient(rgba(11,11,11,.84), rgba(11,11,11,.90)),
+    url("../images/boxingkabakal.jpg");
   background-position: center top, center top;
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
@@ -665,13 +666,19 @@ html.theme-light {
   --green: #1f9d55;
 }
 html.theme-light body {
-  background-image: linear-gradient(rgba(243,243,241,.94), rgba(243,243,241,.97)), url("../images/kabakal_bg.jpg");
+  background-image: linear-gradient(rgba(243,243,241,.90), rgba(243,243,241,.94)), url("../images/boxingkabakal.jpg");
 }
 html.theme-light .site-header { background: rgba(255,255,255,.85); box-shadow: 0 1px 0 var(--line); }
 html.theme-light :is(input, select, textarea), html.theme-light .like-btn { background: #fff; }
 html.theme-light .pw-toggle:hover, html.theme-light .pw-toggle:focus-visible { background: rgba(0,0,0,.06); }
 html.theme-light .site-header .nav-links { box-shadow: 0 12px 24px rgba(0,0,0,.12); }
 /* The home banner is a dark photo: keep the dark theme's tokens inside it so its text stays light. */
+/* Home (dark theme): ONE backdrop - the page photo at full strength, only lightly shaded, and the banner
+   drops its own copy of the photo so it is not shown twice; it keeps just the left-side shading for the headline.
+   Light mode keeps the banner photo + the pale page backdrop. */
+html:not(.theme-light) body.home { background-image: linear-gradient(rgba(11,11,11,.25), rgba(11,11,11,.55)), url("../images/boxingkabakal.jpg"); }
+html:not(.theme-light) body.home .hero { background-color: transparent;
+  background-image: linear-gradient(90deg, rgba(11,11,11,.85) 6%, rgba(11,11,11,.45) 52%, rgba(11,11,11,0) 100%); }
 html.theme-light .hero { --white: #fff; --line: #333; --muted: #a8a8a8; --orange: #ffa600; --orange-dark: #d95a00; color: var(--white); }
 
 /* My Account > Preferences: two radio "cards" with a mini preview of each theme */

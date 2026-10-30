@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/init.php';
 require_once __DIR__ . '/includes/product_card.php';
 $page_title = 'Home';
 $main_class = '';   // home page uses a full-bleed hero + its own .container sections (no page padding)
+$body_class = 'home';   // one full-strength photo backdrop for the whole page (style.css body.home)
 
 // Visible promo videos (newest first)
 $videos = $pdo->query("SELECT * FROM promo_video WHERE is_visible = 1 ORDER BY video_id DESC")->fetchAll();
